@@ -1,0 +1,10 @@
+slotSymbols/blackDiamond.jpg
+slotSymbols/diamond.jpg
+slotSymbols/emerald.jpg
+slotSymbols/luckyScatter.jpg
+slotSymbols/opal.jpg
+slotSymbols/quartz.jpg
+slotSymbols/ruby.jpg
+slotSymbols/sapphire.jpg
+slotSymbols/starWild.jpg
+slotSymbols/topaz.jpg
