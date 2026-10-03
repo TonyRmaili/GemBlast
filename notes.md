@@ -31,7 +31,7 @@ New Feature Ideas
 Changes made
 1. added CsvWriter for payout and more 
 2. Big overhaul on math department. Everything math related should be in the SlotMath.java
-3. 
+3. ValueConfig + UI component. Here we can dynamically adjust the numbers (connect this to sim later for automatic saving of the numbers)
 
 Changes incoming
 1. TheoreticalMath were i can output expected values, etc.
