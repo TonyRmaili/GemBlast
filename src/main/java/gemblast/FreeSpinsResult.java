@@ -6,27 +6,34 @@ import java.util.List;
 /** Everything that happened in one free spins bonus. Pure data. */
 public final class FreeSpinsResult {
 
-    public final boolean superMode;          // triggered with 4+ scatters: sticky wilds on top
+    public final boolean superMode;          // super free spins: sticky wilds on top
+    public final int initialSpins;           // spins awarded when the bonus started
+    public final int startMultiplier;
     public final List<SpinResult> spins;     // in order, including retriggered spins
+    private final List<Integer> extraSpins;  // extraSpins.get(i) = spins added by spin i (0 = none)
 
-    public FreeSpinsResult(boolean superMode, List<SpinResult> spins) {
+    public FreeSpinsResult(boolean superMode, int initialSpins, int startMultiplier,
+                           List<SpinResult> spins, List<Integer> extraSpins) {
         this.superMode = superMode;
+        this.initialSpins = initialSpins;
+        this.startMultiplier = startMultiplier;
         this.spins = Collections.unmodifiableList(spins);
+        this.extraSpins = Collections.unmodifiableList(extraSpins);
     }
 
     public int spinCount() {
         return spins.size();
     }
 
-    /** True if this spin (by index) awarded extra spins. */
-    public boolean retriggeredAt(int index) {
-        return spins.get(index).scatterCount() >= GameRules.RETRIGGER_SCATTERS;
+    /** Spins added by the spin at this index (0 = no retrigger). */
+    public int extraSpinsAt(int index) {
+        return extraSpins.get(index);
     }
 
     public int retriggerCount() {
         int count = 0;
-        for (int i = 0; i < spins.size(); i++) {
-            if (retriggeredAt(i)) {
+        for (int extra : extraSpins) {
+            if (extra > 0) {
                 count++;
             }
         }
@@ -35,7 +42,7 @@ public final class FreeSpinsResult {
 
     /** The multiplier reached by the end of the bonus. */
     public int finalMultiplier() {
-        return spins.isEmpty() ? GameRules.MULTIPLIER_START : spins.get(spins.size() - 1).multiplierAfter;
+        return spins.isEmpty() ? startMultiplier : spins.get(spins.size() - 1).multiplierAfter;
     }
 
     /** Sticky wilds left on the grid at the end of the bonus (always 0 in regular free spins). */

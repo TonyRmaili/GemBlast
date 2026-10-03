@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 /**
  * Builds the shop's content (shown inside an InfoPanel): one row per feature buy / booster.
  * Built fresh every time the shop opens, so buttons always reflect the current state.
+ * Prices come from SlotMath.price.
  */
 public final class ShopContent {
 
@@ -25,7 +26,7 @@ public final class ShopContent {
      * @param locked         true while a round is running: everything is shown but nothing can be clicked
      * @param onChoose       called with the chosen mode (Main decides: buy it, or switch the booster on/off)
      */
-    public static Table build(GameMode activeBooster, Wallet wallet, long betCents, boolean locked,
+    public static Table build(GameMode activeBooster, Wallet wallet, SlotMath math, long betCents, boolean locked,
                               Consumer<GameMode> onChoose) {
         Table content = new Table();
         content.top();
@@ -35,10 +36,11 @@ public final class ShopContent {
         content.add(label("Pay once, the bonus starts immediately.", 1.0f, DIM)).left().padBottom(8f).row();
         for (GameMode mode : GameMode.values()) {
             if (mode.isBuy()) {
+                long cost = cost(math, mode, betCents);
                 // Rule: only one feature at a time, so buys are locked while a booster is on.
-                boolean allowed = !locked && activeBooster == GameMode.NORMAL && wallet.canAfford(mode.cost(betCents));
+                boolean allowed = !locked && activeBooster == GameMode.NORMAL && wallet.canAfford(cost);
                 String reason = activeBooster != GameMode.NORMAL ? "turn the booster off first" : null;
-                content.add(row(mode, betCents, "BUY", allowed, false, reason, onChoose)).padBottom(10f).row();
+                content.add(row(mode, cost, "BUY", allowed, false, reason, onChoose)).padBottom(10f).row();
             }
         }
 
@@ -51,15 +53,19 @@ public final class ShopContent {
                 boolean otherOn = activeBooster != GameMode.NORMAL && !isOn;
                 boolean allowed = !locked && !otherOn;
                 String reason = otherOn ? "only one booster at a time" : null;
-                content.add(row(mode, betCents, isOn ? "TURN OFF" : "TURN ON", allowed, isOn, reason, onChoose))
-                        .padBottom(10f).row();
+                content.add(row(mode, cost(math, mode, betCents), isOn ? "TURN OFF" : "TURN ON", allowed, isOn,
+                        reason, onChoose)).padBottom(10f).row();
             }
         }
         return content;
     }
 
+    private static long cost(SlotMath math, GameMode mode, long betCents) {
+        return Math.round(math.price(mode) * betCents);
+    }
+
     /** One shop row: name + description on the left, price and button on the right. */
-    private static Table row(GameMode mode, long betCents, String buttonText, boolean allowed, boolean isOn,
+    private static Table row(GameMode mode, long cost, String buttonText, boolean allowed, boolean isOn,
                              String reason, Consumer<GameMode> onChoose) {
         Table row = new Table();
         row.setBackground(Assets.solid(ROW_BG));
@@ -72,7 +78,7 @@ public final class ShopContent {
             text.add(label(reason, 1.0f, DIM)).left().row();
         }
 
-        String priceText = Wallet.format(mode.cost(betCents)) + (mode.isBooster() ? " / spin" : "");
+        String priceText = Wallet.format(cost) + (mode.isBooster() ? " / spin" : "");
         Label price = label(priceText, 1.4f, HEADING);
         price.setAlignment(Align.right);
 

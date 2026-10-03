@@ -21,6 +21,7 @@ public class SimulatorContent extends Table {
 
     private static final Color HEADING = new Color(1.00f, 0.85f, 0.30f, 1f);
     private static final Color DIM     = new Color(0.70f, 0.70f, 0.78f, 1f);
+    private static final Color ERROR   = new Color(1.00f, 0.40f, 0.40f, 1f);
     private static final Color ROW_BG  = new Color(0.20f, 0.20f, 0.26f, 1f);
     private static final long MAX_ROUNDS = 100_000_000L;
 
@@ -89,7 +90,7 @@ public class SimulatorContent extends Table {
             return;
         }
         selectedMode = mode;
-        modeLabel.setText("Selected: " + mode.displayName + "  (price " + SimulationResult.num(mode.costMultiplier) + "x bet)");
+        modeLabel.setText("Selected: " + mode.displayName);
     }
 
     private void run() {
@@ -109,6 +110,7 @@ public class SimulatorContent extends Table {
         cancelRequested = false;
         runButton.setEnabled(false);
         cancelButton.setEnabled(true);
+        statusLabel.setColor(Color.WHITE);
         statusLabel.setText("Running...");
 
         final GameMode mode = selectedMode;
@@ -118,13 +120,20 @@ public class SimulatorContent extends Table {
 
         // Everything inside this lambda runs on the background thread.
         Thread worker = new Thread(() -> {
-            SimulationResult result = simulator.run(mode, total, seed, (done, all) -> {
-                Gdx.app.postRunnable(() -> statusLabel.setText(String.format(Locale.US,
-                        "Running... %.0f%%  (%,d / %,d)", 100.0 * done / all, done, all)));
-                return !cancelRequested;
-            });
-            double seconds = (System.currentTimeMillis() - start) / 1000.0;
-            Gdx.app.postRunnable(() -> finished(result, seconds));    // back to the render thread
+            try {
+                SimulationResult result = simulator.run(mode, total, seed, (done, all) -> {
+                    Gdx.app.postRunnable(() -> statusLabel.setText(String.format(Locale.US,
+                            "Running... %.0f%%  (%,d / %,d)", 100.0 * done / all, done, all)));
+                    return !cancelRequested;
+                });
+                double seconds = (System.currentTimeMillis() - start) / 1000.0;
+                Gdx.app.postRunnable(() -> finished(result, seconds));    // back to the render thread
+            } catch (RuntimeException e) {
+                // e.g. a SlotMath method that isn't written yet. Without this catch the background
+                // thread would die silently and the panel would say "Running..." forever.
+                e.printStackTrace();
+                Gdx.app.postRunnable(() -> failed(e));
+            }
         }, "simulator");
         worker.setDaemon(true);   // don't keep the program alive if the window is closed mid-run
         worker.start();
@@ -139,6 +148,15 @@ public class SimulatorContent extends Table {
                 + String.format(Locale.US, "%.1f s", seconds));
         showResults(result);
         System.out.println(result.toReport());   // also in the console, handy to copy into the write-up
+    }
+
+    /** Runs on the render thread when the simulation threw an exception. */
+    private void failed(RuntimeException e) {
+        running = false;
+        runButton.setEnabled(true);
+        cancelButton.setEnabled(false);
+        statusLabel.setColor(ERROR);
+        statusLabel.setText(e.getMessage());
     }
 
     private void showResults(SimulationResult result) {

@@ -35,6 +35,13 @@
             <classifier>natives-desktop</classifier>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.2</version>
+        </dependency>
+
+
     </dependencies>
 
 </project>

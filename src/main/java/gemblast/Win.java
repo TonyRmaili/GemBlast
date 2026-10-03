@@ -1,33 +1,35 @@
 package gemblast;
 
 /**
- * One winning combination, e.g. "Ruby on 4 reels, 6 ways, pays 0.75 per way".
- * Pure data, no graphics.
+ * One winning combination, e.g. "Ruby on 4 reels, 6 ways, 0.75 per way, 4.50x bet in total".
+ * Only data: SlotMath.findWins works out every value and passes it in.
  */
 public final class Win {
 
     public final Symbol symbol;
-    public final int reelCount;      // how many reels in a row matched (3, 4 or 5)
-    public final int ways;           // product of matching cells per reel, e.g. 2*1*3 = 6
-    public final double payPerWay;   // from the paytable, as a multiple of the bet
+    public final int reelCount;      // how many reels in a row matched
+    public final int ways;           // number of ways this win pays on
+    public final double payPerWay;   // from the paytable, x bet
+    public final double totalPay;    // the whole win, x bet (before any free spins multiplier)
     private final boolean[][] cells; // cells[reel][row] = true if that cell is part of this win
 
-    public Win(Symbol symbol, int reelCount, int ways, double payPerWay, boolean[][] cells) {
+    public Win(Symbol symbol, int reelCount, int ways, double payPerWay, double totalPay, boolean[][] cells) {
         this.symbol = symbol;
         this.reelCount = reelCount;
         this.ways = ways;
         this.payPerWay = payPerWay;
+        this.totalPay = totalPay;
         this.cells = cells;
     }
 
-    /** Total win as a multiple of the bet: pay per way x number of ways. */
+    /** The win as a multiple of the bet. */
     public double multiplier() {
-        return payPerWay * ways;
+        return totalPay;
     }
 
-    /** Win in cents for a given bet in cents. Math.round removes tiny double errors (30.000000004 -> 30). */
+    /** The win in cents for a bet in cents. Math.round removes tiny double errors (30.000000004 -> 30). */
     public long amount(long betCents) {
-        return Math.round(multiplier() * betCents);
+        return Math.round(totalPay * betCents);
     }
 
     public boolean includes(int reel, int row) {
@@ -36,6 +38,6 @@ public final class Win {
 
     @Override
     public String toString() {
-        return symbol + " x" + reelCount + ", " + ways + " ways, " + multiplier() + "x bet";
+        return symbol + " x" + reelCount + ", " + ways + " ways, " + totalPay + "x bet";
     }
 }

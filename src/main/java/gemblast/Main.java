@@ -23,7 +23,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     private static final float WORLD_HEIGHT      = 720f;
     private static final float BUTTON_BAR_HEIGHT = 120f;   // space kept free at the bottom for buttons
     private static final float TOP_BAR_HEIGHT    = 80f;    // space kept free at the top for WIN / free spins displays
-    private static final float MARGIN            = 10f;
+    private static final float MARGIN            = 12f;
 
     private static final int REELS = 5;
     private static final int ROWS  = 3;
@@ -33,9 +33,9 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     // ---------------------------------------------------------------- game model (no graphics)
     private final Random rng = new Random();
     private final Wallet wallet = new Wallet();
-    private final Paytable paytable = Paytable.baseGame();
-    private final ReelWeights weights = ReelWeights.baseGame();
-    private final GameEngine engine = new GameEngine(weights, paytable, REELS, ROWS);
+    private final ValueConfig config = ValueConfig.load();         // weights.json in the project root
+    private final SlotMath math = new SlotMath(config);            // ALL the maths
+    private final GameEngine engine = new GameEngine(math, REELS, ROWS);
     private boolean spinning = false;
     private GameMode activeBooster = GameMode.NORMAL;   // NORMAL = no booster on
 
@@ -47,6 +47,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     private Button menuButton;
     private Button shopButton;
     private Button simButton;
+    private Button configButton;
     private AmountDisplay balanceDisplay;
     private AmountDisplay winDisplay;
     private AmountDisplay freeSpinsDisplay;   // "3 / 10", only visible during free spins
@@ -55,12 +56,11 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     private InfoPanel infoPanel;
     private InfoPanel shopPanel;              // rebuilt every time the shop opens
     private InfoPanel simPanel;               // built once, so the last results stay visible
+    private InfoPanel configPanel;
     private long shownWin;                  // what the WIN display is currently counting up to
     private int freeSpinsTotal;             // spins awarded so far in the current bonus (grows on retrigger)
 
     CsvWriter csvWriter = new CsvWriter();
-
-
 
     @Override
     public void create() {
@@ -126,22 +126,32 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         stage.addActor(balanceDisplay);
         refreshBalance();
 
-        // Top right corner: SIM (Monte Carlo simulator), outside the reel area.
+        // Top right corner: SIM (Monte Carlo simulator) and CONFIG, outside the reel area.
         simButton = new Button("SIM", 100f, 44f, this::openSim);
         simButton.setPosition(WORLD_WIDTH - MARGIN, WORLD_HEIGHT - TOP_BAR_HEIGHT / 2f, Align.right);
         stage.addActor(simButton);
 
+        configButton = new Button("CONFIG", 100f, 44f, this::openConfig);
+        configButton.setPosition(WORLD_WIDTH - MARGIN, WORLD_HEIGHT - 2.5f * TOP_BAR_HEIGHT / 2f, Align.right);
+        stage.addActor(configButton);
+
         // Built once, added to / removed from the stage when opened / closed.
-        infoPanel = new InfoPanel("GAME INFO", GameInfo.build(weights, paytable, REELS, ROWS), this::closeMenu);
-        Simulator simulator = new Simulator(weights, paytable, REELS, ROWS);
+        infoPanel = new InfoPanel("GAME INFO", GameInfo.build(config, REELS, ROWS), this::closeMenu);
+        Simulator simulator = new Simulator(math, REELS, ROWS);
         simPanel = new InfoPanel("MONTE CARLO SIMULATOR", new SimulatorContent(simulator), this::closeSim);
+        configPanel = new InfoPanel("CONFIG", new ConfigContent(config), this::closeConfig);
     }
 
     // ---------------------------------------------------------------- round flow
 
+    /** What a round in this mode costs, in cents. The price itself is maths: SlotMath.price. */
+    private long cost(GameMode mode) {
+        return Math.round(math.price(mode) * BET);
+    }
+
     /** What one press of SPIN costs right now: the bet, or the booster price if a booster is on. */
     private long spinCost() {
-        return activeBooster.cost(BET);
+        return cost(activeBooster);
     }
 
     private void spin() {
@@ -156,7 +166,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         spinning = true;
         spinButton.setEnabled(false);
 
-        wallet.debit(mode.cost(BET));        // the price leaves the balance the moment the round starts
+        wallet.debit(cost(mode));            // the price leaves the balance the moment the round starts
         refreshBalance();
         shownWin = 0;
         winDisplay.setVisible(false);
@@ -173,8 +183,6 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         }
 
         csvWriter.writeSpinResult(totalWin);
-
-
     }
 
     private void afterBaseSpin(RoundResult round, long totalWin) {
@@ -191,7 +199,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
 
     private void startFreeSpins(RoundResult round, long totalWin) {
         FreeSpinsResult bonus = round.freeSpins;
-        freeSpinsTotal = GameRules.FREE_SPINS_AWARDED;
+        freeSpinsTotal = bonus.initialSpins;
 
         boosterDisplay.setVisible(false);    // its slot is used by FREE SPINS now
         if (round.hasBaseSpin()) {
@@ -204,7 +212,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
             reelScreen.clearHighlights();
             reelScreen.setFreeSpinsMode(true);
             freeSpinsDisplay.setVisible(true);
-            multiplierDisplay.setText("x" + GameRules.MULTIPLIER_START);
+            multiplierDisplay.setText("x" + bonus.startMultiplier);
             multiplierDisplay.setVisible(true);
             playFreeSpin(bonus, 0, totalWin);
         });
@@ -218,11 +226,12 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         freeSpinsDisplay.setText((index + 1) + " / " + freeSpinsTotal);
 
         reelScreen.playSpin(bonus.spins.get(index), BET, this, () -> {
-            if (bonus.retriggeredAt(index)) {
-                freeSpinsTotal += GameRules.RETRIGGER_SPINS;
+            int extra = bonus.extraSpinsAt(index);
+            if (extra > 0) {
+                freeSpinsTotal += extra;
                 freeSpinsDisplay.setText((index + 1) + " / " + freeSpinsTotal);
                 reelScreen.highlightSymbol(Symbol.SCATTER, bonus.spins.get(index).finalGrid());
-                reelScreen.showMessage("+" + GameRules.RETRIGGER_SPINS + " FREE SPINS", 1.8f, () -> {
+                reelScreen.showMessage("+" + extra + " FREE SPINS", 1.8f, () -> {
                     reelScreen.clearHighlights();
                     playFreeSpin(bonus, index + 1, totalWin);
                 });
@@ -294,7 +303,8 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     // ---------------------------------------------------------------- shop
 
     private void openShop() {
-        shopPanel = new InfoPanel("SHOP", ShopContent.build(activeBooster, wallet, BET, spinning, this::onShopChoice),
+        shopPanel = new InfoPanel("SHOP",
+                ShopContent.build(activeBooster, wallet, math, BET, spinning, this::onShopChoice),
                 this::closeShop);
         stage.addActor(shopPanel);
         stage.setScrollFocus(shopPanel.getScrollPane());
@@ -313,7 +323,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         }
         closeShop();
         if (mode.isBuy()) {
-            if (activeBooster == GameMode.NORMAL && wallet.canAfford(mode.cost(BET))) {
+            if (activeBooster == GameMode.NORMAL && wallet.canAfford(cost(mode))) {
                 startRound(mode);
             }
         } else if (mode.isBooster()) {
@@ -347,7 +357,8 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     }
 
     private boolean isOverlayOpen() {
-        return isMenuOpen() || simPanel.hasParent() || (shopPanel != null && shopPanel.hasParent());
+        return isMenuOpen() || simPanel.hasParent() || configPanel.hasParent()
+                || (shopPanel != null && shopPanel.hasParent());
     }
 
     // ---------------------------------------------------------------- simulator
@@ -362,6 +373,18 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         stage.setKeyboardFocus(null);
     }
 
+    // ---------------------------------------------------------------- config
+
+    private void openConfig() {
+        stage.addActor(configPanel);
+        stage.setScrollFocus(configPanel.getScrollPane());
+    }
+
+    private void closeConfig() {
+        configPanel.remove();
+        stage.setKeyboardFocus(null);
+    }
+
     // ---------------------------------------------------------------- libGDX lifecycle
 
     @Override
@@ -373,6 +396,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
             closeMenu();
             closeShop();
             closeSim();
+            closeConfig();
         }
 
         ScreenUtils.clear(0.08f, 0.08f, 0.10f, 1f);

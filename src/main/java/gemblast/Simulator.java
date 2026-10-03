@@ -11,21 +11,17 @@ import java.util.Random;
  */
 public final class Simulator {
 
-    public static final double TARGET_RTP = 0.96;
-
     /** Called regularly while running. Return false to cancel. */
     public interface Progress {
         boolean onProgress(long done, long total);
     }
 
-    private final ReelWeights weights;
-    private final Paytable paytable;
+    private final SlotMath math;
     private final int reels;
     private final int rows;
 
-    public Simulator(ReelWeights weights, Paytable paytable, int reels, int rows) {
-        this.weights = weights;
-        this.paytable = paytable;
+    public Simulator(SlotMath math, int reels, int rows) {
+        this.math = math;
         this.reels = reels;
         this.rows = rows;
     }
@@ -36,9 +32,9 @@ public final class Simulator {
      * even when it runs on a background thread.
      */
     public SimulationResult run(GameMode mode, long rounds, long seed, Progress progress) {
-        GameEngine engine = new GameEngine(weights, paytable, reels, rows);
+        GameEngine engine = new GameEngine(math, reels, rows);
         Random rng = new Random(seed);
-        SimulationResult.Builder stats = new SimulationResult.Builder(mode, seed);
+        SimulationResult.Builder stats = new SimulationResult.Builder(math, mode, math.price(mode), seed);
 
         long reportEvery = Math.max(1, rounds / 200);   // ~200 progress updates, not millions
         for (long i = 0; i < rounds; i++) {
@@ -59,7 +55,7 @@ public final class Simulator {
      */
     public static void main(String[] args) {
         long rounds = args.length > 0 ? Long.parseLong(args[0]) : 10_000_000L;
-        Simulator simulator = new Simulator(ReelWeights.baseGame(), Paytable.baseGame(), 5, 3);
+        Simulator simulator = new Simulator(new SlotMath(ValueConfig.load()), 5, 3);
 
         for (GameMode mode : GameMode.values()) {
             long n = mode.isBuy() ? Math.max(1, rounds / 10) : rounds;

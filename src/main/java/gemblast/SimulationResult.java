@@ -7,8 +7,8 @@ import java.util.Locale;
 /**
  * The statistics of one simulation run. All amounts are multiples of the bet.
  *
- * Built by the nested Builder, which is fed one RoundResult at a time. The finished result is
- * read-only and can be shown as rows (for the SIM panel) or as a text report (for the console).
+ * The nested Builder collects RAW data while the simulation runs (counts, sums, sums of squares,
+ * every bonus win). build() turns it into statistics with the formulas in SlotMath.
  */
 public final class SimulationResult {
 
@@ -33,14 +33,10 @@ public final class SimulationResult {
 
     private final List<Row> rows;
     private final String title;
-    public final double rtp;
-    public final double fairPrice;
 
-    private SimulationResult(String title, List<Row> rows, double rtp, double fairPrice) {
+    private SimulationResult(String title, List<Row> rows) {
         this.title = title;
         this.rows = rows;
-        this.rtp = rtp;
-        this.fairPrice = fairPrice;
     }
 
     public String title() {
@@ -65,10 +61,12 @@ public final class SimulationResult {
     }
 
     // =====================================================================================
-    /** Collects raw sums while the simulation runs, then turns them into rows in build(). */
+    /** Collects raw data while the simulation runs, then turns it into rows in build(). */
     public static final class Builder {
 
+        private final SlotMath math;
         private final GameMode mode;
+        private final double price;
         private final long seed;
 
         // overall
@@ -85,11 +83,13 @@ public final class SimulationResult {
         private final Simulator.DoubleList bonusWins = new Simulator.DoubleList();
         private final Simulator.DoubleList regularWins = new Simulator.DoubleList();
         private final Simulator.DoubleList superWins = new Simulator.DoubleList();
-        private double sumBonus;
+        private double sumBonus, sumBonusSq;
         private long bonusSpins, retriggers, sumFinalMultiplier, maxFinalMultiplier, sumStickyAtEnd;
 
-        public Builder(GameMode mode, long seed) {
+        public Builder(SlotMath math, GameMode mode, double price, long seed) {
+            this.math = math;
             this.mode = mode;
+            this.price = price;
             this.seed = seed;
         }
 
@@ -97,7 +97,7 @@ public final class SimulationResult {
             rounds++;
             double win = round.totalMultiplier();
             sumWin += win;
-            sumWinSq += win * win;             // for the variance: Var = E[X^2] - E[X]^2
+            sumWinSq += win * win;
             maxWin = Math.max(maxWin, win);
             if (win > 0) {
                 hits++;
@@ -118,6 +118,7 @@ public final class SimulationResult {
                 FreeSpinsResult bonus = round.freeSpins;
                 double bonusWin = round.bonusMultiplier();
                 sumBonus += bonusWin;
+                sumBonusSq += bonusWin * bonusWin;
                 bonusWins.add(bonusWin);
                 (bonus.superMode ? superWins : regularWins).add(bonusWin);
                 bonusSpins += bonus.spinCount();
@@ -144,28 +145,26 @@ public final class SimulationResult {
 
         public SimulationResult build() {
             List<Row> rows = new ArrayList<>();
-            double cost = mode.costMultiplier;
-            double totalBet = rounds * cost;
-            double mean = sumWin / rounds;
-            double variance = sumWinSq / rounds - mean * mean;
-            double sd = Math.sqrt(Math.max(0, variance));
-            double rtp = sumWin / totalBet;
-            double rtpError = 1.96 * sd / Math.sqrt(rounds) / cost;   // 95% confidence interval
-            double fairPrice = mean / Simulator.TARGET_RTP;
+            double totalBet = rounds * price;
+            double variance = math.variance(rounds, sumWin, sumWinSq);
+            double sd = math.standardDeviation(variance);
+            double rtp = math.rtp(sumWin, totalBet);
+            double margin = math.rtpMargin95(rounds, sd, price);
+            double fairPrice = math.fairPrice(sumWin / rounds);
 
-            heading(rows, "OVERALL (" + count(rounds) + " rounds, price " + num(cost) + "x bet)");
+            heading(rows, "OVERALL (" + count(rounds) + " rounds, price " + num(price) + "x bet)");
             row(rows, "Total bet", num(totalBet) + "x");
             row(rows, "Total win", num(sumWin) + "x");
-            row(rows, "RTP", pct(rtp) + "  (+/- " + pct(rtpError) + ", 95%)");
+            row(rows, "RTP", pct(rtp) + "  (+/- " + pct(margin) + ", 95%)");
             row(rows, "Variance (per round)", num(variance));
             row(rows, "Standard deviation (per round)", num(sd) + "x");
             row(rows, "Hit frequency (any win)", pct((double) hits / rounds) + "  (1 in " + oneIn(hits, rounds) + ")");
             row(rows, "Max win", num(maxWin) + "x");
-            row(rows, "Fair price at " + pct(Simulator.TARGET_RTP), num(fairPrice) + "x bet");
+            row(rows, "Fair price at " + pct(SlotMath.TARGET_RTP), num(fairPrice) + "x bet");
 
             heading(rows, "MAIN GAME (base spin + avalanches)");
             if (baseSpins > 0) {
-                row(rows, "RTP", pct(sumBase / totalBet));
+                row(rows, "RTP", pct(math.rtp(sumBase, totalBet)));
                 row(rows, "Win frequency per round", pct((double) baseHits / baseSpins));
                 row(rows, "Avg avalanche steps per spin", num((double) baseAvalancheSteps / baseSpins));
             } else {
@@ -174,16 +173,15 @@ public final class SimulationResult {
 
             heading(rows, "BONUS GAME (free spins, entire round)");
             long bonusCount = bonusWins.size();
-            row(rows, "Bonus RTP", pct(sumBonus / totalBet));
+            row(rows, "Bonus RTP", pct(math.rtp(sumBonus, totalBet)));
             row(rows, "Bonus entry probability", pct((double) bonusCount / rounds) + "  (1 in " + oneIn(bonusCount, rounds) + ")");
             if (bonusCount > 0) {
                 double[] sorted = bonusWins.sorted();
-                double bonusMean = sumBonus / bonusCount;
-                double bonusVar = varianceOf(sorted, bonusMean);
-                row(rows, "Average win", num(bonusMean) + "x");
-                row(rows, "Median win", num(median(sorted)) + "x");
+                double bonusVar = math.variance(bonusCount, sumBonus, sumBonusSq);
+                row(rows, "Average win", num(sumBonus / bonusCount) + "x");
+                row(rows, "Median win", num(math.median(sorted)) + "x");
                 row(rows, "Variance", num(bonusVar));
-                row(rows, "Standard deviation", num(Math.sqrt(bonusVar)) + "x");
+                row(rows, "Standard deviation", num(math.standardDeviation(bonusVar)) + "x");
                 row(rows, "Max bonus win", num(sorted[sorted.length - 1]) + "x");
                 row(rows, "Avg spins per bonus", num((double) bonusSpins / bonusCount));
                 row(rows, "Retriggers per bonus", num((double) retriggers / bonusCount));
@@ -202,10 +200,10 @@ public final class SimulationResult {
             }
 
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";
-            return new SimulationResult(title, rows, rtp, fairPrice);
+            return new SimulationResult(title, rows);
         }
 
-        private static void splitRows(List<Row> rows, String name, Simulator.DoubleList wins, long rounds) {
+        private void splitRows(List<Row> rows, String name, Simulator.DoubleList wins, long rounds) {
             if (wins.size() == 0) {
                 return;
             }
@@ -215,23 +213,8 @@ public final class SimulationResult {
                 sum += w;
             }
             row(rows, name + ": 1 in / avg / median", oneIn(wins.size(), rounds) + " / "
-                    + num(sum / sorted.length) + "x / " + num(median(sorted)) + "x");
+                    + num(sum / sorted.length) + "x / " + num(math.median(sorted)) + "x");
         }
-    }
-
-    // ---------------------------------------------------------------- maths helpers
-
-    static double median(double[] sorted) {
-        int n = sorted.length;
-        return n % 2 == 1 ? sorted[n / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0;
-    }
-
-    static double varianceOf(double[] values, double mean) {
-        double sum = 0;
-        for (double v : values) {
-            sum += (v - mean) * (v - mean);
-        }
-        return sum / values.length;
     }
 
     // ---------------------------------------------------------------- formatting helpers

@@ -7,7 +7,7 @@ package gemblast;
  */
 public final class RoundResult {
 
-    public final GameMode mode;               // how this round was played (and what it cost)
+    public final GameMode mode;               // how this round was played
     public final SpinResult baseSpin;         // null for a bought bonus
     public final FreeSpinsResult freeSpins;   // null when the bonus didn't trigger
 
@@ -19,11 +19,6 @@ public final class RoundResult {
 
     public boolean hasBaseSpin() {
         return baseSpin != null;
-    }
-
-    /** What the round cost, as a multiple of the bet (1 for a normal spin, e.g. 24.6 for a bought bonus). */
-    public double costMultiplier() {
-        return mode.costMultiplier;
     }
 
     public boolean triggeredFreeSpins() {

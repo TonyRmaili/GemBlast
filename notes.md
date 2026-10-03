@@ -27,3 +27,13 @@ New Feature Ideas
    if 5 unique gems land in a row something triggers "something"
 
 
+
+Changes made
+1. added CsvWriter for payout and more 
+2. Big overhaul on math department. Everything math related should be in the SlotMath.java
+3. 
+
+Changes incoming
+1. TheoreticalMath were i can output expected values, etc.
+
+
