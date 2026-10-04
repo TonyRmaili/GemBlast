@@ -29,6 +29,17 @@ public final class SlotMath {
     public static final int MAX_CASCADES = 100;
     public static final int MAX_FREE_SPINS = 200;
 
+    // free spin constants
+    public static final int FREE_SPINS_AWARDED = 10;
+    public static final int RETRIGGER_SPINS = 5;
+    public static final int FREE_SPINS_SCATTERS  = 3;
+    public static final int SUPER_SCATTERS  = 4;
+    public static final int RETRIGGER_SCATTERS  = 3;
+    public static final int MULTIPLIER_START  = 1;
+
+
+
+
     private final ValueConfig config;
 
     public SlotMath(ValueConfig config) {
@@ -179,7 +190,36 @@ public final class SlotMath {
      *         (the screen uses it to animate the drop)
      */
     public boolean[][] avalanche(Board board, boolean[][] removed, Random rng) {
-        throw notImplemented("avalanche");
+        boolean[][] newCells = new boolean[board.reelCount][board.rowCount];
+
+        for (int reel = 0; reel < board.reelCount; reel++ ){
+            List<Symbol> survivors = new ArrayList<>();
+            for (int row = board.rowCount - 1; row >= 0; row--){
+                // finds the cells that needs removal
+                if (!removed[reel][row] && !board.isSticky(reel,row)){
+                    survivors.add(board.get(reel,row));
+                }
+                if (removed[reel][row] && board.isSticky(reel,row)){
+                    board.setSticky(reel,row,false);
+                }
+
+            }
+            int next = 0;
+            for (int row = board.rowCount - 1; row >= 0; row--){
+                if (board.isSticky(reel,row)){
+                    continue;
+                }
+                if (next < survivors.size()){
+                    board.set(reel,row,survivors.get(next));
+                    next++;
+                }
+                else{
+                    board.set(reel,row,drawSymbol(reel,rng));
+                    newCells[reel][row] = true;
+                }
+            }
+        }
+        return newCells;
     }
 
     // ================================================================ 4. free spins
@@ -202,32 +242,47 @@ public final class SlotMath {
 
     /** Free spins awarded for this many scatters at the end of a base spin. 0 = no bonus. */
     public int freeSpinsAwarded(int scatterCount) {
-        throw notImplemented("freeSpinsAwarded");
+        if (scatterCount >= FREE_SPINS_SCATTERS){
+            return FREE_SPINS_AWARDED;
+        }
+        return 0;
     }
 
     /** True if this many scatters trigger SUPER free spins instead of regular ones. */
     public boolean isSuperTrigger(int scatterCount) {
-        throw notImplemented("isSuperTrigger");
+        if (scatterCount >= SUPER_SCATTERS){
+            return true;
+        }
+        return false;
     }
 
     /** Extra spins for this many scatters at the end of a FREE spin. 0 = no retrigger. */
     public int retriggerSpins(int scatterCount) {
-        throw notImplemented("retriggerSpins");
+        if (scatterCount >= RETRIGGER_SCATTERS){
+            return RETRIGGER_SPINS;
+        }
+        return 0;
     }
 
     /** The multiplier at the start of a bonus. */
     public int startMultiplier() {
-        throw notImplemented("startMultiplier");
+        return MULTIPLIER_START;
     }
 
     /** The multiplier after a winning avalanche step during free spins (it persists between spins). */
     public int nextMultiplier(int current) {
-        throw notImplemented("nextMultiplier");
+        return current + 1;
     }
 
     /** Super free spins: lock the wilds currently on the board (board.setSticky). */
     public void lockStickyWilds(Board board) {
-        throw notImplemented("lockStickyWilds");
+        for (int reel = 0; reel < board.reelCount; reel++) {
+            for (int row = 0; row < board.rowCount; row++) {
+                if (board.get(reel, row) == Symbol.WILD) {
+                    board.setSticky(reel, row, true);
+                }
+            }
+        }
     }
 
     // ================================================================ 5. shop

@@ -34,7 +34,11 @@ public class MathPlayground {
 
         Symbol[][] grid = board.snapshot();
         int scatterCount = math.countScatters(grid);
-        System.out.print("scatters: " + scatterCount);
+        System.out.println("scatters: " + scatterCount);
+
+        boolean[][] newCells = math.avalanche(board, remove, rng);
+        System.out.println(board);
+        System.out.println(Arrays.deepToString(newCells));
 
 
     }
