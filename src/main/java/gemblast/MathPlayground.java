@@ -17,6 +17,11 @@ public class MathPlayground {
         board.set(2,1,Symbol.WILD);
         board.setSticky(2,1,true);
 
+        board.set(4,2,Symbol.SCATTER);
+        board.setSticky(4,2,true);
+
+
+
         // method testing from SlotsMath
         math.fillGrid(board,rng);
         System.out.println(board);
@@ -26,6 +31,10 @@ public class MathPlayground {
 
         boolean[][] remove = math.cellsToRemove(board, wins);
         System.out.println(Arrays.deepToString(remove));
+
+        Symbol[][] grid = board.snapshot();
+        int scatterCount = math.countScatters(grid);
+        System.out.print("scatters: " + scatterCount);
 
 
     }

@@ -186,8 +186,19 @@ public final class SlotMath {
 
     /** How many scatters are on this grid. */
     public int countScatters(Symbol[][] grid) {
-        throw notImplemented("countScatters");
+        int scatterCount = 0;
+        for (int reel = 0; reel < grid.length; reel++) {
+            for (int row = 0; row < grid[reel].length; row++) {
+                Symbol cell = grid[reel][row];
+                if (cell == Symbol.SCATTER){
+                    scatterCount++;
+                }
+            }
+        }
+        return scatterCount;
     }
+
+
 
     /** Free spins awarded for this many scatters at the end of a base spin. 0 = no bonus. */
     public int freeSpinsAwarded(int scatterCount) {
