@@ -288,15 +288,36 @@ public final class SlotMath {
     // ================================================================ 5. shop
 
     /** Price of one round in this mode, as a multiple of the bet. A normal spin always costs 1 bet. */
+    // dummy prices for now until verified rtp is ran through simulator
     public double price(GameMode mode) {
         if (mode == GameMode.NORMAL) {
             return 1.0;
         }
+        else if (mode == GameMode.BOOST_SCATTER){
+            return 1.43;
+        }
+        else if (mode == GameMode.BOOST_WILD){
+            return 1.20;
+        }
+        else if (mode == GameMode.BUY_FREE_SPINS){
+            return 30;
+        }
+        else if (mode == GameMode.BUY_SUPER_FREE_SPINS){
+            return 80;
+        }
+
         throw notImplemented("price(" + mode + ")");
     }
 
     /** Free spins awarded by a feature buy (BUY_FREE_SPINS / BUY_SUPER_FREE_SPINS). */
     public int boughtFreeSpins(GameMode mode) {
+        if (mode == GameMode.BUY_FREE_SPINS) {
+            return FREE_SPINS_AWARDED;
+        }
+        else if (mode == GameMode.BUY_SUPER_FREE_SPINS) {
+            return FREE_SPINS_AWARDED;
+        }
+
         throw notImplemented("boughtFreeSpins");
     }
 
@@ -305,7 +326,20 @@ public final class SlotMath {
      * Called for every base spin: for NORMAL (or any non-booster mode) it must do nothing.
      */
     public void applyBooster(Board board, GameMode mode, Random rng) {
-        throw notImplemented("applyBooster");
+
+        if (mode == GameMode.BOOST_SCATTER){
+            Symbol scatter =  Symbol.SCATTER;
+            int randomRow = rng.nextInt(board.rowCount);
+
+            board.set(board.reelCount-1,randomRow,scatter);
+        }
+
+        else if (mode == GameMode.BOOST_WILD){
+            Symbol wild = Symbol.WILD;
+            int randomRow = rng.nextInt(board.rowCount);
+            int randomReel = rng.nextInt(board.reelCount-1) +1;
+            board.set(randomReel,randomRow,wild);
+        }
     }
 
     // ================================================================ 6. statistics (used by the simulator)
