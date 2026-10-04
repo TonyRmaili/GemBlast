@@ -1,5 +1,6 @@
 package gemblast;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -45,19 +46,49 @@ public final class SlotMath {
      * weights from config.weights(reel). Weight w out of a reel total T means probability w / T.
      */
     public Symbol drawSymbol(int reel, Random rng) {
-        throw notImplemented("drawSymbol");
+
+        double[] weights = config.weights(reel);
+        double randomNumber = rng.nextDouble();
+        double totalWeight =  ValueConfig.WEIGHT_TOTAL;
+        randomNumber = randomNumber*totalWeight;
+
+        double counter = 0;
+        int weightIndex = weights.length -1; // in case we move outside the range defaults to last symbol
+
+
+        for (int i = 0; i < weights.length; i++){
+            counter += weights[i];
+            if (randomNumber < counter){
+                weightIndex =  i;
+                break;
+            }
+        }
+
+        Symbol symbol = Symbol.values()[weightIndex];
+        return symbol;
     }
+
 
     /**
      * Fills the board for a new spin: every cell that is NOT sticky gets a new symbol.
      * Sticky cells (board.isSticky) keep their wild.
      */
+
+
     public void fillGrid(Board board, Random rng) {
-        throw notImplemented("fillGrid");
+        for (int row = 0; row < board.rowCount; row++){
+            for (int reel = 0; reel < board.reelCount; reel++){
+                if (board.isSticky(reel,row)){
+                    continue;
+                }
+                Symbol symbol = drawSymbol(reel,rng);
+                board.set(reel,row,symbol);
+            }
+        }
+
     }
 
     // ================================================================ 2. what pays
-
     /**
      * Every ways win on the current board, biggest first (the screen shows them in this order).
      * For each win, build a Win with: the symbol, how many reels in a row matched, the number of ways,
@@ -65,12 +96,76 @@ public final class SlotMath {
      * that are part of it (cells[reel][row] = true). Empty list = no win.
      */
     public List<Win> findWins(Board board) {
-        throw notImplemented("findWins");
+        List<Win> wins = new ArrayList<>();
+
+        for (Symbol symbol : Symbol.values()){
+            double[] pays = config.pays(symbol);
+            if (pays == null){
+               continue;
+            }
+
+            List<Integer> ways = new ArrayList<>();
+            int reelCount = 0;
+            boolean[][] cells = new boolean[board.reelCount][board.rowCount];
+
+
+            for (int reel = 0; reel < board.reelCount; reel++){
+               int symbolCounter = 0;
+               for (int row = 0; row < board.rowCount; row++){
+                   if (symbol == board.get(reel,row) || board.get(reel,row) == Symbol.WILD){
+                       symbolCounter += 1;
+                       cells[reel][row] = true;
+
+                   }
+
+               }
+               if (symbolCounter == 0 ){
+                   break;
+               }
+               reelCount++;
+               ways.add(symbolCounter);
+
+           }
+
+            if (reelCount >= MIN_WIN_LENGTH){
+                int waysMultiplier = 1;
+
+                for (int way : ways) {
+                    waysMultiplier *= way;
+                }
+                double paysMultiplier = pays[reelCount-MIN_WIN_LENGTH];
+                double totalPay = paysMultiplier*waysMultiplier;
+                Win win = new Win(
+                        symbol,
+                        reelCount,
+                        waysMultiplier,
+                        paysMultiplier,
+                        totalPay,
+                        cells
+                );
+                wins.add(win);
+                }
+            }
+        wins.sort((a, b) -> Double.compare(b.totalPay, a.totalPay));
+        return wins;
     }
 
     /** The cells the avalanche removes after these wins ([reel][row] = true means remove). */
     public boolean[][] cellsToRemove(Board board, List<Win> wins) {
-        throw notImplemented("cellsToRemove");
+        boolean[][] cells = new boolean[board.reelCount][board.rowCount];
+        for (Win win : wins){
+            for (int reel = 0; reel < board.reelCount; reel++){
+                for (int row = 0;row < board.rowCount; row++){
+                    if (win.includes(reel,row)){
+                        cells[reel][row] = true;
+                    }
+
+
+                }
+            }
+        }
+        return cells;
+
     }
 
     // ================================================================ 3. avalanche

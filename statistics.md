@@ -70,3 +70,7 @@ Original weights
 ]
 }
 }
+
+TOPAZ         TOPAZ         SAPPHIRE      OPAL      TOPAZ         
+QUARTZ        SAPPHIRE      WILD*         OPAL      EMERALD       
+QUARTZ        QUARTZ        EMERALD       QUARTZ   SAPPHIRE      

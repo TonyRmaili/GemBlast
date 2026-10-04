@@ -76,6 +76,8 @@ public class ValueConfig {
         return list == null ? null : toArray(list);
     }
 
+
+
     // ---------------------------------------------------------------- changing (used by the CONFIG panel)
 
     public void setReel1Weights(double[] weights) {

@@ -37,3 +37,10 @@ Changes incoming
 1. TheoreticalMath were i can output expected values, etc.
 
 
+SlotMath
+
+1. drawSymbol 
+   handles the selection of one symbol per reel.
+   output SD? 
+2. fillGrid
+   fills the grid one symbol at a time. Skips if a cell is flagged as sticky which in current game state only a Wild can sticky in super free mode.
