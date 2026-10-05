@@ -9,6 +9,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 
+import java.util.Map;
+
 /**
  * The big game area: reels, a win banner, and a centre message panel.
  * It only REPLAYS results the GameEngine already decided; it never decides anything.
@@ -18,11 +20,14 @@ public class ReelScreen extends Group {
     /**
      * What ReelScreen reports back while it replays a spin.
      * An interface is a list of methods a class promises to have; Main "implements" it.
-     * (A lambda can only stand in for an interface with ONE method, so with two we use an interface.)
+     * (A lambda can only stand in for an interface with ONE method, so with more we use an interface.)
+     * "default" methods have an empty body here, so a listener only has to write the ones it cares about.
      */
     public interface SpinListener {
         void onWinShown(long amountCents);        // a win just appeared on screen
         void onMultiplierChanged(int multiplier); // after each avalanche step
+        default void onShatterMeters(int[] meters) { }   // free spins: the SHATTER meters changed
+        default void onShatterExplode(Symbol gem) { }    // free spins: this gem's meter exploded
     }
 
     private static final Color BACKGROUND    = new Color(0.15f, 0.15f, 0.20f, 1f);
@@ -31,11 +36,13 @@ public class ReelScreen extends Group {
     private static final Color MESSAGE_COLOR = new Color(0.10f, 0.05f, 0.15f, 0.95f);
 
     // Timings in seconds. Tweak these to change the feel of the game.
-    private static final float REVEAL_DELAY  = 0.25f;  // between each reel appearing
-    private static final float WIN_SHOW_TIME = 1.0f;   // each winning combo on screen
-    private static final float CLEAR_TIME    = 0.35f;  // winning cells gone, gaps visible
-    private static final float FALL_TIME     = 0.35f;  // survivors dropped down, empty spaces on top
-    private static final float REFILL_TIME   = 0.45f;  // new symbols in, before checking for wins again
+    private static final float REVEAL_DELAY    = 0.25f;  // between each reel appearing
+    private static final float WIN_SHOW_TIME   = 1.0f;   // each winning combo on screen
+    private static final float CLEAR_TIME      = 0.35f;  // winning cells gone, gaps visible
+    private static final float FALL_TIME       = 0.35f;  // survivors dropped down, empty spaces on top
+    private static final float REFILL_TIME     = 0.45f;  // new symbols in, before checking for wins again
+    private static final float BONUS_SHOW_TIME = 1.6f;   // each row BONUS on screen (a bit longer: it's special)
+    private static final float SHATTER_SHOW_TIME = 1.4f; // each SHATTER explosion on screen
 
     private final Reel[] reels;
     private final int rowCount;
@@ -106,11 +113,20 @@ public class ReelScreen extends Group {
      *   1. reveal the first grid reel by reel
      *   2. for each avalanche step: show each win -> clear the winning cells
      *      -> survivors fall -> new symbols drop in
-     *   3. onDone
+     *   3. (super free spins) each row BONUS: the row lights up and pays
+     *   4. (free spins) each SHATTER explosion: the gem's meter explodes and pays
+     *   5. onDone
      */
     public void playSpin(SpinResult spin, long betCents, SpinListener listener, Runnable onDone) {
         setEmpty();
         SequenceAction sequence = Actions.sequence();
+
+        // SHATTER meters as they should look after each step, worked out now from the spin's data.
+        final int[] meters = spin.hasShatterMeters() ? spin.shatterMetersBefore.clone() : null;
+        if (meters != null) {
+            final int[] before = meters.clone();
+            sequence.addAction(Actions.run(() -> listener.onShatterMeters(before)));
+        }
 
         // 1) reveal, left to right. Sticky wilds from earlier spins are already there before the reveal.
         sequence.addAction(Actions.run(() -> showStickyWilds(spin.stickyBefore, spin.initialGrid)));
@@ -124,6 +140,16 @@ public class ReelScreen extends Group {
 
         // 2) avalanche steps
         for (SpinResult.Cascade cascade : spin.cascades) {
+            final int[] metersAfterStep;
+            if (meters != null) {
+                for (Map.Entry<Symbol, Integer> entry : cascade.shattered.entrySet()) {
+                    meters[entry.getKey().ordinal()] += entry.getValue();
+                }
+                metersAfterStep = meters.clone();
+            } else {
+                metersAfterStep = null;
+            }
+
             for (Win win : cascade.wins) {
                 sequence.addAction(Actions.run(() -> {
                     highlight(win);
@@ -138,6 +164,9 @@ public class ReelScreen extends Group {
                 winBanner.setVisible(false);
                 clearCells(cascade.removed);
                 listener.onMultiplierChanged(cascade.multiplierAfter);
+                if (metersAfterStep != null) {
+                    listener.onShatterMeters(metersAfterStep);   // the shattered gems fly into the meters
+                }
             }));
             sequence.addAction(Actions.delay(CLEAR_TIME));
 
@@ -151,7 +180,45 @@ public class ReelScreen extends Group {
             sequence.addAction(Actions.delay(REFILL_TIME));
         }
 
-        // 3) done
+        // 3) row BONUS (super free spins only): every paying row lights up on its own, after all avalanches
+        for (int row = 0; row < spin.rowCount(); row++) {
+            if (!spin.hasRowBonus(row)) {
+                continue;
+            }
+            final int bonusRow = row;
+            sequence.addAction(Actions.run(() -> {
+                highlightRow(bonusRow);
+                showBanner(rowBonusText(spin, bonusRow, betCents));
+                listener.onWinShown(spin.rowBonusAmount(bonusRow, betCents));
+            }));
+            sequence.addAction(Actions.delay(BONUS_SHOW_TIME));
+        }
+        if (spin.hasAnyRowBonus()) {
+            sequence.addAction(Actions.run(() -> {
+                clearHighlights();
+                winBanner.setVisible(false);
+            }));
+        }
+
+        // 4) SHATTER explosions (free spins): every full meter explodes, with the end-of-spin multiplier
+        for (int i = 0; i < spin.shatterCount(); i++) {
+            final int index = i;
+            final Symbol gem = spin.shatterGem(i);
+            meters[gem.ordinal()] -= SlotMath.SHATTER_METER_SIZE;
+            final int[] metersAfterExplosion = meters.clone();
+            sequence.addAction(Actions.run(() -> {
+                listener.onShatterExplode(gem);
+                listener.onShatterMeters(metersAfterExplosion);
+                showBanner(shatterText(spin, index, betCents));
+                listener.onWinShown(spin.shatterAmount(index, betCents));
+            }));
+            sequence.addAction(Actions.delay(SHATTER_SHOW_TIME));
+        }
+        if (spin.shatterCount() > 0) {
+            sequence.addAction(Actions.run(() -> winBanner.setVisible(false)));
+        }
+
+        // 5) done
         sequence.addAction(Actions.run(onDone));
         addAction(sequence);   // the Stage calls act() every frame, which advances the sequence
     }
@@ -259,6 +326,15 @@ public class ReelScreen extends Group {
         }
     }
 
+    /** The whole row in magenta (row BONUS), everything else dimmed. */
+    private void highlightRow(int bonusRow) {
+        for (int reel = 0; reel < reels.length; reel++) {
+            for (int row = 0; row < rowCount; row++) {
+                reels[reel].getCell(row).setLook(row == bonusRow ? Cell.Look.BONUS : Cell.Look.DIMMED);
+            }
+        }
+    }
+
     private void showBanner(String text) {
         winLabel.setText(text);
         winBanner.pack();   // resize the banner to fit the new text
@@ -273,6 +349,30 @@ public class ReelScreen extends Group {
                 + "   " + Wallet.format(win.amount(betCents));
         if (cascade.multiplier > 1) {
             text += " x" + cascade.multiplier + " = " + Wallet.format(cascade.amount(win, betCents));
+        }
+        return text;
+    }
+
+    /** "5 UNIQUE GEMS!   BONUS 5.00"  or with a multiplier  "5 UNIQUE GEMS!   BONUS 5.00 x7 = 35.00" */
+    private static String rowBonusText(SpinResult spin, int row, long betCents) {
+        long basePay = Math.round(spin.rowBonusBasePay(row) * betCents);
+        String text = "5 UNIQUE GEMS!   BONUS " + Wallet.format(basePay);
+        if (spin.multiplierAfter > 1) {
+            text += " x" + spin.multiplierAfter + " = " + Wallet.format(spin.rowBonusAmount(row, betCents));
+        }
+        return text;
+    }
+
+    /** "Topaz SHATTERED!   0.50"  or with a multiplier  "Topaz SHATTERED!   0.50 x7 = 3.50" */
+    private static String shatterText(SpinResult spin, int index, long betCents) {
+        int multiplier = spin.multiplierAfter;
+        long total = spin.shatterAmount(index, betCents);
+        String text = spin.shatterGem(index).displayName() + " SHATTERED!   ";
+        if (multiplier > 1) {
+            long base = Math.round(spin.shatterPay(index) / multiplier * betCents);
+            text += Wallet.format(base) + " x" + multiplier + " = " + Wallet.format(total);
+        } else {
+            text += Wallet.format(total);
         }
         return text;
     }

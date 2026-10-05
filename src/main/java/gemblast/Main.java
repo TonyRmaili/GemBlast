@@ -12,7 +12,8 @@ import java.util.Random;
 
 /**
  * Gem Blast: entry point. Builds the screen and connects the buttons to the game model.
- * "implements ReelScreen.SpinListener" = Main promises to have onWinShown() and onMultiplierChanged(),
+ * "implements ReelScreen.SpinListener" = Main promises to have onWinShown() and onMultiplierChanged()
+ * (and chooses to also write the optional onShatterMeters() / onShatterExplode()),
  * so it can pass itself (this) to ReelScreen and get told when wins appear.
  */
 public class Main extends ApplicationAdapter implements ReelScreen.SpinListener {
@@ -53,6 +54,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     private AmountDisplay freeSpinsDisplay;   // "3 / 10", only visible during free spins
     private AmountDisplay multiplierDisplay;  // "x4",     only visible during free spins
     private AmountDisplay boosterDisplay;     // shows the active booster (same spot as FREE SPINS)
+    private ShatterPanel shatterPanel;        // SHATTER meters, left of the reels, only visible during free spins
     private InfoPanel infoPanel;
     private InfoPanel shopPanel;              // rebuilt every time the shop opens
     private InfoPanel simPanel;               // built once, so the last results stay visible
@@ -77,6 +79,12 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
                 (WORLD_WIDTH - reelScreen.getWidth()) / 2f,
                 BUTTON_BAR_HEIGHT + (WORLD_HEIGHT - BUTTON_BAR_HEIGHT - TOP_BAR_HEIGHT - reelScreen.getHeight()) / 2f);
         stage.addActor(reelScreen);
+
+        // Left of the reels: the SHATTER meters, hidden outside free spins.
+        shatterPanel = new ShatterPanel(config);
+        shatterPanel.setPosition(reelScreen.getX() / 2f, reelScreen.getY(Align.center), Align.center);
+        shatterPanel.setVisible(false);
+        stage.addActor(shatterPanel);
 
         // Top bar: WIN display, hidden until the round wins something.
         winDisplay = new AmountDisplay("WIN", 260f, 70f);
@@ -211,6 +219,8 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         reelScreen.showMessage(title, 2.5f, () -> {
             reelScreen.clearHighlights();
             reelScreen.setFreeSpinsMode(true);
+            shatterPanel.reset();
+            shatterPanel.setVisible(true);
             freeSpinsDisplay.setVisible(true);
             multiplierDisplay.setText("x" + bonus.startMultiplier);
             multiplierDisplay.setVisible(true);
@@ -250,6 +260,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         reelScreen.showMessage(text, 3f, () -> {
             reelScreen.setFreeSpinsMode(false);
             reelScreen.clearStickyWilds();
+            shatterPanel.setVisible(false);
             freeSpinsDisplay.setVisible(false);
             multiplierDisplay.setVisible(false);
             refreshBoosterDisplay();
@@ -271,6 +282,16 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         multiplierDisplay.setText("x" + multiplier);    // harmless in the base game: the display is hidden
     }
 
+    @Override
+    public void onShatterMeters(int[] meters) {
+        shatterPanel.setMeters(meters);
+    }
+
+    @Override
+    public void onShatterExplode(Symbol gem) {
+        shatterPanel.explode(gem);
+    }
+
     private void finishRound(long totalWin) {
         wallet.credit(totalWin);             // paid once, after everything was shown (base + bonus)
         refreshBalance();
@@ -287,6 +308,8 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         reelScreen.setEmpty();
         reelScreen.setFreeSpinsMode(false);
         reelScreen.clearStickyWilds();
+        shatterPanel.reset();
+        shatterPanel.setVisible(false);
         winDisplay.setVisible(false);
         freeSpinsDisplay.setVisible(false);
         multiplierDisplay.setVisible(false);

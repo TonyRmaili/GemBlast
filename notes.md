@@ -1,8 +1,6 @@
 
 GemBlast v2 - Math and Java Evaluation focus
 
-
-
 Current State
 
 1. Math is not in a single big class so it's hard to inspect
@@ -52,13 +50,24 @@ hit f = 44.85%
 avg s per bonus 10,86
 multiplier x7.97 / x34
 
-My idea moving forward (we wont do them now)
+bought super free spin rtp = 46%
 
-move around 10% rtp from base game to free spin
-increase super spin rtp so the overall rtp lands on 96
-invent 2 more features (here one of them can be super spin mode only)
-Pipeline a much more advanced statistics file as csv and json (identical data, differant format) as requested by my boss
-Change the dynamic config part so it is better to use (right now clunky and to much clutter like the images). I am also thinking that the weight total needs not be 100 since we are dividing by the total. 100 is just a nicer number to understand., This makes the guard in config not needed.
-Build the MathPlayground a bit better to prepare for my demonstration (like how i can run things separetly and so on)
-Bug test, validate and implement the changes mentioned above make sure they work
-One more thing about the math part. Seeing how much statistics the simulator gives out, its only a fraction of the math i just did in SlotMath. Would like to move those calculations out there to so i can do them myself (why did you not place them there in the first place?
+
+** 2 Feature ideas
+
+1. 5 unique gems in a row (with 3 possible rows) provides a "BONUS"
+   only triggered in super free spin due to its large probability
+   Winning row is not part of a cascasde and evaluates at the end of a cascade. practically being the last thing to happen after a spin
+   Win calculation = highest paying symbol in the row treating it as a way 1x1x1x1x1 and last reel. for example if a black diamond is in the row then the win =
+   5.0 x 1 x bet = 5 (all the remaining symbols are treated as if they were black diamnods)
+
+   This already raised the overall RTP to 97% 
+   Ideas that can improve the rtp in case this was not reaching high engough (could be relevent when i make super mode rarer)
+   1. have a multiplier on the posistion of the rarest symbol, for example if black diamond (highest paying) land on reel 5 (highest reel) => max win 
+   2. combo per uniqueRow multiplier (getting 1x,2x or 3x the pay once all is resolved of all rows are part of uniqeRow)
+
+1. Something that builds up/collects. Sounds like a fun thing to watch grow and also code.
+
+
+overall rtp 106.63 with these 2 new features
+bought free spin + super pricing balanced towards targeted rtp

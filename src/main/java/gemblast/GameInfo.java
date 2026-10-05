@@ -102,7 +102,17 @@ public final class GameInfo {
                 "",
                 "SUPER FREE SPINS",
                 "Everything from free spins, plus STICKY WILDS: every wild that appears locks in place",
-                "until it is part of a win; then it is used up.");
+                "until it is part of a win; then it is used up.",
+                "",
+                "ROW BONUS (super free spins only)",
+                "After the last avalanche of a spin, every row with 5 DIFFERENT gems (no wild, no scatter)",
+                "pays the 5-of-a-kind pay of its best gem, times the current multiplier.",
+                "",
+                "SHATTER (both free spins modes)",
+                "Every gem in a win shatters into its meter (wilds and scatters don't count).",
+                "Meters carry over from spin to spin. At the end of a spin, every full meter ("
+                        + SlotMath.SHATTER_METER_SIZE + ") explodes",
+                "and pays that gem's 5-of-a-kind pay, times the current multiplier.");
     }
 
     // ---------------------------------------------------------------- small helpers

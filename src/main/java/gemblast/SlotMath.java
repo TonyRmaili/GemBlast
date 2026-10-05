@@ -1,8 +1,8 @@
 package gemblast;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ALL the maths of Gem Blast lives in this one class: how symbols land, what pays, how the
@@ -35,6 +35,8 @@ public final class SlotMath {
     public static final int RETRIGGER_SCATTERS  = 3;
     public static final int MULTIPLIER_START  = 1;
 
+    public static final int SHATTER_METER_SIZE = 10;
+    public static final int SHATTER_MULTIPLIER = 1;
 
     private final ValueConfig config;
 
@@ -113,23 +115,19 @@ public final class SlotMath {
             int reelCount = 0;
             boolean[][] cells = new boolean[board.reelCount][board.rowCount];
 
-
             for (int reel = 0; reel < board.reelCount; reel++){
                int symbolCounter = 0;
                for (int row = 0; row < board.rowCount; row++){
                    if (symbol == board.get(reel,row) || board.get(reel,row) == Symbol.WILD){
                        symbolCounter += 1;
                        cells[reel][row] = true;
-
                    }
-
                }
                if (symbolCounter == 0 ){
                    break;
                }
                reelCount++;
                ways.add(symbolCounter);
-
            }
 
             if (reelCount >= MIN_WIN_LENGTH){
@@ -279,6 +277,59 @@ public final class SlotMath {
         }
     }
 
+    /** new feature - only triggered in free spins and super free spins */
+    public Map<Symbol, Integer> shatterCollect(Board board,boolean[][] removed){
+        Map<Symbol, Integer> collectedSymbols = new HashMap<>();
+
+        for (int reel = 0; reel < board.reelCount;reel++){
+            for (int row = 0; row < board.rowCount; row++){
+                if ( removed[reel][row] ){
+                    Symbol symbol = board.get(reel,row);
+                    if (config.pays(symbol) != null){
+                        collectedSymbols.put(symbol, collectedSymbols.getOrDefault(symbol, 0) + 1);
+                    }
+                }
+            }
+        }
+        return collectedSymbols;
+    }
+
+    /** Pay when this gem's meter fills: its 5-of-a-kind pay times the multiplier, x bet. */
+    public double shatterPay(Symbol symbol, int multiplier) {
+        double[] pays = config.pays(symbol);
+        double highestPay = pays[pays.length-1];
+
+        return highestPay*multiplier;
+    }
+
+
+    /** new feature - only triggered in super free spins */
+    public double uniqueGemsInRowPay(Board board,int rowIndex){
+        // place all symbols in a list, skip Wild and Scatter. finally check if they are unique
+        List<Symbol> row = new ArrayList<>();
+        for (int reel = 0; reel < board.reelCount; reel++){
+            if (board.get(reel,rowIndex) == Symbol.WILD || board.get(reel,rowIndex) == Symbol.SCATTER){
+                return 0;
+            }
+            row.add(board.get(reel,rowIndex));
+        }
+        boolean allUnique = row.stream()
+                .distinct()
+                .count() == row.size();
+
+        // find the highest paying Symbol
+        if (allUnique){
+            List<Double> highestPays = new ArrayList<>(board.reelCount);
+            for (Symbol symbol : row){
+                double[] pays = config.pays(symbol);
+                double highestPay = pays[pays.length-1];
+                highestPays.add(highestPay);
+            }
+            return Collections.max(highestPays);
+        }
+        return 0;
+    }
+
     // ================================================================ 5. shop
 
     /** Price of one round in this mode, as a multiple of the bet. A normal spin always costs 1 bet. */
@@ -297,7 +348,7 @@ public final class SlotMath {
             return 30;
         }
         else if (mode == GameMode.BUY_SUPER_FREE_SPINS){
-            return 80;
+            return 115.3;
         }
 
         throw notImplemented("price(" + mode + ")");
