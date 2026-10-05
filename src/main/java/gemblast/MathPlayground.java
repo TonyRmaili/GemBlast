@@ -11,6 +11,8 @@ public class MathPlayground {
         ValueConfig config = ValueConfig.load();     // reads weights.json from the project root
         SlotMath math = new SlotMath(config);
         Random rng = new Random(42);                 // fixed seed = same results every run
+        double[] limits = {0, 1, 5, 20, 100, 1000};
+        double[] WINS = {0, 0.5, 1.0, 3.0, 999, 1000};
 
         // board setup
         Board board = new Board(5,3);
@@ -39,6 +41,12 @@ public class MathPlayground {
         boolean[][] newCells = math.avalanche(board, remove, rng);
         System.out.println(board);
         System.out.println(Arrays.deepToString(newCells));
+
+        for (int i = 0; i < WINS.length; i++){
+
+            int bucket = math.distributionBucket(WINS[i],limits);
+            System.out.println(bucket);
+        }
 
 
     }

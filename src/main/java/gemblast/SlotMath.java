@@ -7,19 +7,17 @@ import java.util.Random;
 /**
  * ALL the maths of Gem Blast lives in this one class: how symbols land, what pays, how the
  * avalanche refills, the free spins rules, the shop and the statistics formulas.
- *
  * Every method below is a TODO. The rest of the game (GameEngine, the screen, the simulator) only
  * CALLS these methods, so as soon as one is implemented the game uses it everywhere.
  * An unimplemented method throws, so a crash message tells you exactly which piece is missing.
- *
- * Numbers that are meant to be tuned (weights, paytable) are NOT in here: they come from
+ * Numbers that are meant to be tuned (weights, pay-table) are NOT in here: they come from
  * weights.json through ValueConfig, so you can change them without recompiling.
  */
 public final class SlotMath {
 
     // ================================================================ rules (design choices, change freely)
 
-    /** Wins need at least this many adjacent reels from the left. Also used by the paytable display. */
+    /** Wins need at least this many adjacent reels from the left. Also used by the pay-table display. */
     public static final int MIN_WIN_LENGTH = 3;
 
     /** Return target used for fair shop prices and in the simulator report. */
@@ -36,8 +34,6 @@ public final class SlotMath {
     public static final int SUPER_SCATTERS  = 4;
     public static final int RETRIGGER_SCATTERS  = 3;
     public static final int MULTIPLIER_START  = 1;
-
-
 
 
     private final ValueConfig config;
@@ -57,7 +53,6 @@ public final class SlotMath {
      * weights from config.weights(reel). Weight w out of a reel total T means probability w / T.
      */
     public Symbol drawSymbol(int reel, Random rng) {
-
         double[] weights = config.weights(reel);
         double randomNumber = rng.nextDouble();
         double totalWeight =  ValueConfig.WEIGHT_TOTAL;
@@ -65,7 +60,6 @@ public final class SlotMath {
 
         double counter = 0;
         int weightIndex = weights.length -1; // in case we move outside the range defaults to last symbol
-
 
         for (int i = 0; i < weights.length; i++){
             counter += weights[i];
@@ -343,40 +337,70 @@ public final class SlotMath {
     }
 
     // ================================================================ 6. statistics (used by the simulator)
-
-    /** Return to player: total won / total bet. */
     public double rtp(double totalWin, double totalBet) {
-        throw notImplemented("rtp");
+        return totalWin / totalBet;
     }
 
-    /** Variance of the values, from their count n, their sum and the sum of their squares. */
     public double variance(long n, double sum, double sumOfSquares) {
-        throw notImplemented("variance");
+        return Math.max(0, sumOfSquares / n - Math.pow(sum / n, 2));
     }
 
-    /** Standard deviation from a variance. */
     public double standardDeviation(double variance) {
-        throw notImplemented("standardDeviation");
+        return Math.sqrt(variance);
     }
-
-    /** Median of values that are already sorted from low to high. */
     public double median(double[] sorted) {
-        throw notImplemented("median");
+        // check for even or odd length of sorted
+        // case odd
+        if (sorted.length % 2 == 1){
+            int middleIndex = sorted.length/2;
+            return sorted[middleIndex];
+        }
+        // case even
+        else {
+            int upperMiddleIndex = sorted.length/2;
+            int lowerMiddleIndex = upperMiddleIndex -1;
+
+            double upperMiddleNumber = sorted[upperMiddleIndex];
+            double lowerMiddleNumber = sorted[lowerMiddleIndex];
+
+            return (upperMiddleNumber+lowerMiddleNumber)/2;
+        }
     }
 
-    /**
-     * The +/- margin on a measured RTP at 95% confidence, for n rounds with this standard deviation
-     * (per round, in bets) and this price per round (in bets).
-     */
+    public double totalBet(long rounds, double price) {
+        return rounds*price;
+    }
+
+    public double average(double sum, long count) {
+        return sum/count;
+    }
+
+    public double frequency(long count, long total) {
+        return (double) count /total;
+    }
+
+    public double oneIn(long count, long total) {
+        return (double) total/count;
+    }
+
+    public int distributionBucket(double win, double[] limits) {
+
+        for (int i = 1; i < limits.length ; i++) {
+            if (win == 0) {
+                return 0;
+            } else if (win >= limits[i - 1] && win < limits[i]) {
+                return i;
+            }
+        }
+        return limits.length;
+    }
+
     public double rtpMargin95(long n, double standardDeviation, double price) {
-        throw notImplemented("rtpMargin95");
+        return (1.96 * standardDeviation / Math.sqrt(n))/price;
     }
-
-    /** The price a mode should cost so it returns TARGET_RTP, given its average win per round (in bets). */
     public double fairPrice(double averageWin) {
-        throw notImplemented("fairPrice");
+        return averageWin/TARGET_RTP;
     }
-
     // ================================================================
 
     private static UnsupportedOperationException notImplemented(String what) {

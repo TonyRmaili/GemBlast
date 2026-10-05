@@ -44,3 +44,21 @@ SlotMath
    output SD? 
 2. fillGrid
    fills the grid one symbol at a time. Skips if a cell is flagged as sticky which in current game state only a Wild can sticky in super free mode.
+
+the game works. the numbers however is not were i want them to be, but that was like the original.
+overall rtp sitting at 85.45 with +-0.31
+bonus entry 1.6%
+hit f = 44.85%
+avg s per bonus 10,86
+multiplier x7.97 / x34
+
+My idea moving forward (we wont do them now)
+
+move around 10% rtp from base game to free spin
+increase super spin rtp so the overall rtp lands on 96
+invent 2 more features (here one of them can be super spin mode only)
+Pipeline a much more advanced statistics file as csv and json (identical data, differant format) as requested by my boss
+Change the dynamic config part so it is better to use (right now clunky and to much clutter like the images). I am also thinking that the weight total needs not be 100 since we are dividing by the total. 100 is just a nicer number to understand., This makes the guard in config not needed.
+Build the MathPlayground a bit better to prepare for my demonstration (like how i can run things separetly and so on)
+Bug test, validate and implement the changes mentioned above make sure they work
+One more thing about the math part. Seeing how much statistics the simulator gives out, its only a fraction of the math i just did in SlotMath. Would like to move those calculations out there to so i can do them myself (why did you not place them there in the first place?

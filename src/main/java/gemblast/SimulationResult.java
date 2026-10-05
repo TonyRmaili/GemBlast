@@ -102,7 +102,7 @@ public final class SimulationResult {
             if (win > 0) {
                 hits++;
             }
-            buckets[bucketOf(win)]++;
+            buckets[math.distributionBucket(win, BUCKET_LIMITS)]++;
 
             if (round.hasBaseSpin()) {
                 double base = round.baseMultiplier();
@@ -131,26 +131,14 @@ public final class SimulationResult {
             }
         }
 
-        private static int bucketOf(double win) {
-            if (win <= 0) {
-                return 0;
-            }
-            for (int i = 1; i < BUCKET_LIMITS.length; i++) {
-                if (win < BUCKET_LIMITS[i]) {
-                    return i;
-                }
-            }
-            return BUCKET_LIMITS.length;
-        }
-
         public SimulationResult build() {
             List<Row> rows = new ArrayList<>();
-            double totalBet = rounds * price;
+            double totalBet = math.totalBet(rounds, price);
             double variance = math.variance(rounds, sumWin, sumWinSq);
             double sd = math.standardDeviation(variance);
             double rtp = math.rtp(sumWin, totalBet);
             double margin = math.rtpMargin95(rounds, sd, price);
-            double fairPrice = math.fairPrice(sumWin / rounds);
+            double fairPrice = math.fairPrice(math.average(sumWin, rounds));
 
             heading(rows, "OVERALL (" + count(rounds) + " rounds, price " + num(price) + "x bet)");
             row(rows, "Total bet", num(totalBet) + "x");
@@ -158,15 +146,15 @@ public final class SimulationResult {
             row(rows, "RTP", pct(rtp) + "  (+/- " + pct(margin) + ", 95%)");
             row(rows, "Variance (per round)", num(variance));
             row(rows, "Standard deviation (per round)", num(sd) + "x");
-            row(rows, "Hit frequency (any win)", pct((double) hits / rounds) + "  (1 in " + oneIn(hits, rounds) + ")");
+            row(rows, "Hit frequency (any win)", pct(math.frequency(hits, rounds)) + "  (1 in " + oneIn(hits, rounds) + ")");
             row(rows, "Max win", num(maxWin) + "x");
             row(rows, "Fair price at " + pct(SlotMath.TARGET_RTP), num(fairPrice) + "x bet");
 
             heading(rows, "MAIN GAME (base spin + avalanches)");
             if (baseSpins > 0) {
                 row(rows, "RTP", pct(math.rtp(sumBase, totalBet)));
-                row(rows, "Win frequency per round", pct((double) baseHits / baseSpins));
-                row(rows, "Avg avalanche steps per spin", num((double) baseAvalancheSteps / baseSpins));
+                row(rows, "Win frequency per round", pct(math.frequency(baseHits, baseSpins)));
+                row(rows, "Avg avalanche steps per spin", num(math.average(baseAvalancheSteps, baseSpins)));
             } else {
                 row(rows, "RTP", "- (bought bonus, no base spin)");
             }
@@ -174,33 +162,38 @@ public final class SimulationResult {
             heading(rows, "BONUS GAME (free spins, entire round)");
             long bonusCount = bonusWins.size();
             row(rows, "Bonus RTP", pct(math.rtp(sumBonus, totalBet)));
-            row(rows, "Bonus entry probability", pct((double) bonusCount / rounds) + "  (1 in " + oneIn(bonusCount, rounds) + ")");
+            row(rows, "Bonus entry probability", pct(math.frequency(bonusCount, rounds)) + "  (1 in " + oneIn(bonusCount, rounds) + ")");
             if (bonusCount > 0) {
                 double[] sorted = bonusWins.sorted();
                 double bonusVar = math.variance(bonusCount, sumBonus, sumBonusSq);
-                row(rows, "Average win", num(sumBonus / bonusCount) + "x");
+                row(rows, "Average win", num(math.average(sumBonus, bonusCount)) + "x");
                 row(rows, "Median win", num(math.median(sorted)) + "x");
                 row(rows, "Variance", num(bonusVar));
                 row(rows, "Standard deviation", num(math.standardDeviation(bonusVar)) + "x");
                 row(rows, "Max bonus win", num(sorted[sorted.length - 1]) + "x");
-                row(rows, "Avg spins per bonus", num((double) bonusSpins / bonusCount));
-                row(rows, "Retriggers per bonus", num((double) retriggers / bonusCount));
-                row(rows, "Final multiplier (avg / max)", "x" + num((double) sumFinalMultiplier / bonusCount)
+                row(rows, "Avg spins per bonus", num(math.average(bonusSpins, bonusCount)));
+                row(rows, "Retriggers per bonus", num(math.average(retriggers, bonusCount)));
+                row(rows, "Final multiplier (avg / max)", "x" + num(math.average(sumFinalMultiplier, bonusCount))
                         + " / x" + maxFinalMultiplier);
                 splitRows(rows, "Regular free spins", regularWins, rounds);
                 splitRows(rows, "Super free spins", superWins, rounds);
                 if (superWins.size() > 0) {
-                    row(rows, "Super: sticky wilds left at end", num((double) sumStickyAtEnd / superWins.size()));
+                    row(rows, "Super: sticky wilds left at end", num(math.average(sumStickyAtEnd, superWins.size())));
                 }
             }
 
             heading(rows, "WIN DISTRIBUTION (share of rounds)");
             for (int i = 0; i < buckets.length; i++) {
-                row(rows, BUCKET_NAMES[i], pct((double) buckets[i] / rounds));
+                row(rows, BUCKET_NAMES[i], pct(math.frequency(buckets[i], rounds)));
             }
 
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";
             return new SimulationResult(title, rows);
+        }
+
+        /** "1 in X" as text, or "-" when it never happened. */
+        private String oneIn(long count, long total) {
+            return count == 0 ? "-" : String.format(Locale.US, "%,.0f", math.oneIn(count, total));
         }
 
         private void splitRows(List<Row> rows, String name, Simulator.DoubleList wins, long rounds) {
@@ -213,7 +206,7 @@ public final class SimulationResult {
                 sum += w;
             }
             row(rows, name + ": 1 in / avg / median", oneIn(wins.size(), rounds) + " / "
-                    + num(sum / sorted.length) + "x / " + num(math.median(sorted)) + "x");
+                    + num(math.average(sum, sorted.length)) + "x / " + num(math.median(sorted)) + "x");
         }
     }
 
@@ -237,9 +230,5 @@ public final class SimulationResult {
 
     static String count(long value) {
         return String.format(Locale.US, "%,d", value);
-    }
-
-    static String oneIn(long hits, long total) {
-        return hits == 0 ? "-" : String.format(Locale.US, "%,.0f", (double) total / hits);
     }
 }
