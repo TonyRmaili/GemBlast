@@ -14,6 +14,10 @@ public class MathPlayground {
         Random rng = new Random(44);                 // fixed seed = same results every run
         Board board = new Board(5,3);
 
+
+        math.drawSymbol(0,rng);
+        math.drawSymbol(1,rng);
+
         // new feature testing uniqueGemsInRow()
 //        int rowIndex = 0;
 //        board.set(0,0,Symbol.BLACK_DIAMOND);
@@ -46,26 +50,26 @@ public class MathPlayground {
 //
 //        // board setup
 
-        board.set(2,1,Symbol.WILD);
-        board.setSticky(2,1,true);
-//
+//        board.set(2,1,Symbol.WILD);
+//        board.setSticky(2,1,true);
+////
 //        board.set(4,2,Symbol.SCATTER);
 //        board.setSticky(4,2,true);
 
 
 
         // method testing from SlotsMath
-        math.fillGrid(board,rng);
-        System.out.println(board);
-
-        List<Win> wins = math.findWins(board);
-        System.out.println(wins);
-
-        boolean[][] remove = math.cellsToRemove(board, wins);
-        System.out.println(Arrays.deepToString(remove));
-
-        Map<Symbol, Integer>  collectedSymbols = math.shatterCollect(board,remove);
-        System.out.println(collectedSymbols);
+//        math.fillGrid(board,rng);
+//        System.out.println(board);
+//
+//        List<Win> wins = math.findWins(board);
+//        System.out.println(wins);
+//
+//        boolean[][] remove = math.cellsToRemove(board, wins);
+//        System.out.println(Arrays.deepToString(remove));
+//
+//        Map<Symbol, Integer>  collectedSymbols = math.shatterCollect(board,remove);
+//        System.out.println(collectedSymbols);
 
 //        Symbol[][] grid = board.snapshot();
 //        int scatterCount = math.countScatters(grid);

@@ -4,15 +4,6 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * ALL the maths of Gem Blast lives in this one class: how symbols land, what pays, how the
- * avalanche refills, the free spins rules, the shop and the statistics formulas.
- * Every method below is a TODO. The rest of the game (GameEngine, the screen, the simulator) only
- * CALLS these methods, so as soon as one is implemented the game uses it everywhere.
- * An unimplemented method throws, so a crash message tells you exactly which piece is missing.
- * Numbers that are meant to be tuned (weights, pay-table) are NOT in here: they come from
- * weights.json through ValueConfig, so you can change them without recompiling.
- */
 public final class SlotMath {
 
     // ================================================================ rules (design choices, change freely)
@@ -36,16 +27,10 @@ public final class SlotMath {
     public static final int MULTIPLIER_START  = 1;
 
     public static final int SHATTER_METER_SIZE = 10;
-    public static final int SHATTER_MULTIPLIER = 1;
-
     private final ValueConfig config;
 
     public SlotMath(ValueConfig config) {
         this.config = config;
-    }
-
-    public ValueConfig config() {
-        return config;
     }
 
     // ================================================================ 1. how symbols land
@@ -57,7 +42,12 @@ public final class SlotMath {
     public Symbol drawSymbol(int reel, Random rng) {
         double[] weights = config.weights(reel);
         double randomNumber = rng.nextDouble();
-        double totalWeight =  ValueConfig.WEIGHT_TOTAL;
+
+        double totalWeight = 0;
+        for (double weight : weights){
+            totalWeight += weight;
+        }
+
         randomNumber = randomNumber*totalWeight;
 
         double counter = 0;
@@ -70,18 +60,13 @@ public final class SlotMath {
                 break;
             }
         }
-
-        Symbol symbol = Symbol.values()[weightIndex];
-        return symbol;
+        return Symbol.values()[weightIndex];
     }
-
 
     /**
      * Fills the board for a new spin: every cell that is NOT sticky gets a new symbol.
      * Sticky cells (board.isSticky) keep their wild.
      */
-
-
     public void fillGrid(Board board, Random rng) {
         for (int row = 0; row < board.rowCount; row++){
             for (int reel = 0; reel < board.reelCount; reel++){
@@ -362,7 +347,6 @@ public final class SlotMath {
         else if (mode == GameMode.BUY_SUPER_FREE_SPINS) {
             return FREE_SPINS_AWARDED;
         }
-
         throw notImplemented("boughtFreeSpins");
     }
 

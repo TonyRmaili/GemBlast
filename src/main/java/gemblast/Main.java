@@ -147,7 +147,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         infoPanel = new InfoPanel("GAME INFO", GameInfo.build(config, REELS, ROWS), this::closeMenu);
         Simulator simulator = new Simulator(math, REELS, ROWS);
         simPanel = new InfoPanel("MONTE CARLO SIMULATOR", new SimulatorContent(simulator), this::closeSim);
-        configPanel = new InfoPanel("CONFIG", new ConfigContent(config), this::closeConfig);
+        configPanel = new InfoPanel("CONFIG", new ConfigContent(config), this::closeConfig, 1240f);   // wider: arrow buttons
     }
 
     // ---------------------------------------------------------------- round flow

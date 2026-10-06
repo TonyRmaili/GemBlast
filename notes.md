@@ -69,5 +69,7 @@ bought super free spin rtp = 46%
 1. Something that builds up/collects. Sounds like a fun thing to watch grow and also code.
 
 
-overall rtp 106.63 with these 2 new features
+overall rtp 106.7 with these 2 new features
 bought free spin + super pricing balanced towards targeted rtp
+
+

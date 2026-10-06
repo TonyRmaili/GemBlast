@@ -18,9 +18,17 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
  */
 public class InfoPanel extends Table {
 
+    private static final float DEFAULT_WIDTH = 1000f;
+    private static final float HEIGHT = 600f;
+
     private final ScrollPane scrollPane;
 
     public InfoPanel(String title, Actor content, Runnable onClose) {
+        this(title, content, onClose, DEFAULT_WIDTH);
+    }
+
+    /** @param width the panel's width; the CONFIG panel uses a wider one for its arrow buttons. */
+    public InfoPanel(String title, Actor content, Runnable onClose, float width) {
         // --- the overlay itself (this Table) ---
         setFillParent(true);                    // cover the whole stage
         setBackground(solid(new Color(0f, 0f, 0f, 0.7f)));   // dark see-through dimming
@@ -37,10 +45,9 @@ public class InfoPanel extends Table {
 
         // --- title row ---
         Label titleLabel = new Label(title, textStyle);
-        Button closeButton = new Button("X", 60f, 60f, onClose);  // adjust if your constructor differs
+        Button closeButton = new Button("X", 60f, 60f, onClose);
 
         // --- scrollable body ---
-        
         Table padded = new Table();
         padded.add(content).growX().top().padRight(20f);   // room for the scrollbar
         padded.top();
@@ -59,7 +66,7 @@ public class InfoPanel extends Table {
         panel.row();
         panel.add(scrollPane).colspan(2).grow().padTop(16f);  // row 2: text spans both columns
 
-        add(panel).width(1000f).height(600f);            // a Table centres its content by default
+        add(panel).width(width).height(HEIGHT);         // a Table centres its content by default
     }
 
     /** The mouse wheel only scrolls the actor that has "scroll focus", so Main hands this to the Stage. */

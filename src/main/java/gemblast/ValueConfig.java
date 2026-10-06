@@ -30,7 +30,6 @@ import java.util.Map;
 public class ValueConfig {
 
     public static final Path FILE = Path.of("weights.json");
-    public static final double WEIGHT_TOTAL = 100.0;
 
     public List<Double> reel1;
     public List<Double> reel2to5;
