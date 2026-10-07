@@ -62,7 +62,6 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
     private long shownWin;                  // what the WIN display is currently counting up to
     private int freeSpinsTotal;             // spins awarded so far in the current bonus (grows on retrigger)
 
-    CsvWriter csvWriter = new CsvWriter();
 
     @Override
     public void create() {
@@ -190,7 +189,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
             startFreeSpins(round, totalWin);
         }
 
-        csvWriter.writeSpinResult(totalWin);
+
     }
 
     private void afterBaseSpin(RoundResult round, long totalWin) {

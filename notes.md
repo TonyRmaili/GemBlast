@@ -1,75 +1,98 @@
 
 GemBlast v2 - Math and Java Evaluation focus
 
-Current State
+**Presentation**
+* NEW FILES
+ConfigContent
+   game now uses dynamic weight and pay-table adjustment. this file is the GUI element. 
 
-1. Math is not in a single big class so it's hard to inspect
-2. RTP main-game: 45% , free-spin: 40% ⇒ total: 85
+ValueConfig
+   Reads from weights.json all configurable values.
+   Returns these values from around the app. 
+   Idea here is to have an easier way to see and adjust games rtp and other relevant values. Implemented improvements such as 3 stepper buttons and dropped the totalWeight = 100 restriction. 
+
+CsvWriter
+   Will change/be replaced. Test file for java Read/Write class
+
+DesktopLauncher
+   Launches game via its own main(). This is created because of libGDX and maven not exactly compatible. 
+   
+MathPlayground
+   File for testing methods, mostly from SlothMath independently without needing to compile the whole game.
+   Very smooth workflow I am used to from working with Python. 
+
+ShatterPanel
+   GUI element for feature shatterCollect. 
+
+SlothMath
+   Biggest part of the project. Here is all current and future math methods that run the game. GameEngine and other files uses these methods in the game loop logic.
+   
+
+**PROGRESS**
+Version 1
+* Math methods were all over the place and hard to evaluate/debug. Now they are all contained in SlothMath. 
+* RTP base-game: 45% , free-spin: 40% ⇒ total: 85. This needs to bump up to 96% total and ideally more coming from the freeSpin
+* Weak feature for super free spin. To increase the RTP here we need more or better features. 
+* No proper output for simulator statistics. 
+* No good way to configure or balance the values
 
 
-Version 2.0 
+Version 2
+* Goal: main game RTP = 35%, free-spin = 61%  => overall RTP = 96%
+* Started by factoring out all the math methods from every file into SlotMath. Wrote them myself. For testing these for bugs I defined MathPlayground were i can run each individual method.
+* Once all the methods were implemented the game was runnable and outputting identical values as before. From here I wanted to be able to access the values (mainly reel weights and pay-table) easily and configure them for balancing. ReelWeights.java got replaced by the files ValueConfig and ConfigContent. Game now can make changes to these values, apply and save, all methods relying on these now reads from the weights.json file. Developer can now easily adjust, test, observe. This is not complete, still needs a proper output from simulator to connect the whole workflow for balancing the game. 
+* Before putting in work for balancing the game needs more features. At this point I developed two features exclusive for freespin modes (1 for super free only, see **Features** below). After these two features the overall RTP went up to 106.7
+  the free spins now contributing around 60% (near the goal) but the base game needs to be brought down. 
+* Time to implement the statistics output as CSV and JSON 
+* Balance 
+* NEW IDEAS for version 3
 
-1. Break out the game math to a single coherent file that returns the several formats of the calculations (display,monte-carlo, in-game etc.)
-2. New GUI element that opens up a weight tuning window for dynamic setting of the numbers
-3. Output statistics in CSV or JSON (human-readable format for analysis)
-4. Move around 10% units from base game to free-spine mode and increase overall RPT to 96%.
-   Goal: main game RTP => 35%, free-spin => 61% (+/- 5%)
+
+**Features**
+Base-game:
+3-3-3-3-3 bet ways
+8 paying symbols, 1 wild, 1 scatter
+
+3 scatters on board triggers freeSpin with 10 spins
+4+ scatters on board triggers superFreeSpin with 10 spins 
+
+Symbols in a winning combinations gets replaced by new symbols falling in for continued chance of winning (avalanche mechanic Spin stops once there are no winning combos left or no triggered freeSpin. 
 
 
-New Feature Ideas
-1. Void cells
+FreeSpin mode:
+Landing 3+ scatters yields 5 more free-spins for the mode. 
+Each winning combo increments the global multiplier by 1 (multiplier starts at 1). Multiple winning combos each increments by 1.
+* new feature #1 - shatter Collect * 
+All paying symbols now are displayed to the left of the grid with 10 empty fillable meters. Every corresponding symbol in a winning combo (excluding wild) gets collected to the meter. Once filled (up to 10, overflow collects gets carried over for the next meter) the gem "shatters" and pays out MAX_METER x MAX_SYMBOL x GLOBAL_MULTIPLIER. 
+  My thoughts here is to have fun thing to happen and build up so the free spin mode doesnt feel dry. This bumps up the RTP in this mode and scales with the multiplier which means at the end of the spin this is were it will pay out the most. 
+
+SuperFreeSpin mode:
+Same as free spin with two additional features. 
+
+Sticky Wilds:
+Wilds stick around in a spin until they are part of a winning combo, were they get replaced like normal. 
+
+* new feature #2 - uniqueRow 
+At the end of a spin (once there are no more cascades going on) the game checks if a row contains 5 unique paying symbols (excluding wilds and scatters). Since there are 3 rows and 8 paying symbols this can occur often. I knew this would pay out a lot and therefore wanted it to be part of the super free rather than freeSpin. 
+Payout = MAX_REEL_POSITION * global 
+Also scales at the end of the spin mode 
+
+**New Ideas**
+
+
+1. Void cells (old)
    A rare symbol (similar density to wild) that can be clicked
-   opens a choice 1 of 3 hidden cells that contains something useful to complete a winning 
+   opens a choice 1 of 3 hidden cells that contains something useful to complete a winning
    combo
-2. Line Combos
+2. Line Combos (old)
    if 5 unique gems land in a row something triggers "something"
+3. Diamond grid with locked parts (3-5-7-5-3) => 1575 ways
+
+4. TheoreticalMath were i can output expected values, etc.
 
 
 
-Changes made
-1. added CsvWriter for payout and more 
-2. Big overhaul on math department. Everything math related should be in the SlotMath.java
-3. ValueConfig + UI component. Here we can dynamically adjust the numbers (connect this to sim later for automatic saving of the numbers)
-
-Changes incoming
-1. TheoreticalMath were i can output expected values, etc.
 
 
-SlotMath
-
-1. drawSymbol 
-   handles the selection of one symbol per reel.
-   output SD? 
-2. fillGrid
-   fills the grid one symbol at a time. Skips if a cell is flagged as sticky which in current game state only a Wild can sticky in super free mode.
-
-the game works. the numbers however is not were i want them to be, but that was like the original.
-overall rtp sitting at 85.45 with +-0.31
-bonus entry 1.6%
-hit f = 44.85%
-avg s per bonus 10,86
-multiplier x7.97 / x34
-
-bought super free spin rtp = 46%
-
-
-** 2 Feature ideas
-
-1. 5 unique gems in a row (with 3 possible rows) provides a "BONUS"
-   only triggered in super free spin due to its large probability
-   Winning row is not part of a cascasde and evaluates at the end of a cascade. practically being the last thing to happen after a spin
-   Win calculation = highest paying symbol in the row treating it as a way 1x1x1x1x1 and last reel. for example if a black diamond is in the row then the win =
-   5.0 x 1 x bet = 5 (all the remaining symbols are treated as if they were black diamnods)
-
-   This already raised the overall RTP to 97% 
-   Ideas that can improve the rtp in case this was not reaching high engough (could be relevent when i make super mode rarer)
-   1. have a multiplier on the posistion of the rarest symbol, for example if black diamond (highest paying) land on reel 5 (highest reel) => max win 
-   2. combo per uniqueRow multiplier (getting 1x,2x or 3x the pay once all is resolved of all rows are part of uniqeRow)
-
-1. Something that builds up/collects. Sounds like a fun thing to watch grow and also code.
-
-
-overall rtp 106.7 with these 2 new features
-bought free spin + super pricing balanced towards targeted rtp
 
 

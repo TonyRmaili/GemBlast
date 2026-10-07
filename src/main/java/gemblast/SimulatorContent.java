@@ -39,6 +39,8 @@ public class SimulatorContent extends Table {
     // Without it, the background thread might never see the change.
     private volatile boolean cancelRequested = false;
 
+    CsvWriter csvWriter = new CsvWriter();
+
     public SimulatorContent(Simulator simulator) {
         this.simulator = simulator;
         top().left();
@@ -128,6 +130,8 @@ public class SimulatorContent extends Table {
                 });
                 double seconds = (System.currentTimeMillis() - start) / 1000.0;
                 Gdx.app.postRunnable(() -> finished(result, seconds));    // back to the render thread
+                csvWriter.writeSimResult(result.data());
+
             } catch (RuntimeException e) {
                 // e.g. a SlotMath method that isn't written yet. Without this catch the background
                 // thread would die silently and the panel would say "Running..." forever.
