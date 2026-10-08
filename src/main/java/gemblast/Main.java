@@ -145,7 +145,7 @@ public class Main extends ApplicationAdapter implements ReelScreen.SpinListener 
         // Built once, added to / removed from the stage when opened / closed.
         infoPanel = new InfoPanel("GAME INFO", GameInfo.build(config, REELS, ROWS), this::closeMenu);
         Simulator simulator = new Simulator(math, REELS, ROWS);
-        simPanel = new InfoPanel("MONTE CARLO SIMULATOR", new SimulatorContent(simulator), this::closeSim);
+        simPanel = new InfoPanel("MONTE CARLO SIMULATOR", new SimulatorContent(simulator,config), this::closeSim);
         configPanel = new InfoPanel("CONFIG", new ConfigContent(config), this::closeConfig, 1240f);   // wider: arrow buttons
     }
 

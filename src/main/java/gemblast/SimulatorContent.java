@@ -39,10 +39,12 @@ public class SimulatorContent extends Table {
     // Without it, the background thread might never see the change.
     private volatile boolean cancelRequested = false;
 
-    CsvWriter csvWriter = new CsvWriter();
+    private final ValueConfig config;
 
-    public SimulatorContent(Simulator simulator) {
+    public SimulatorContent(Simulator simulator, ValueConfig config) {
         this.simulator = simulator;
+        this.config = config;
+
         top().left();
         defaults().left();
 
@@ -130,7 +132,8 @@ public class SimulatorContent extends Table {
                 });
                 double seconds = (System.currentTimeMillis() - start) / 1000.0;
                 Gdx.app.postRunnable(() -> finished(result, seconds));    // back to the render thread
-                csvWriter.writeSimResult(result.data());
+
+                boolean saved = new GemWriter(result,config).writeAll();
 
             } catch (RuntimeException e) {
                 // e.g. a SlotMath method that isn't written yet. Without this catch the background

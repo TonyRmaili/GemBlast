@@ -1,0 +1,130 @@
+{
+  "run": {
+    "mode": "NORMAL",
+    "rounds": 10000,
+    "seed": 7445589987400,
+    "price": 1.0,
+    "targetRtp": 0.96
+  },
+  "overall": {
+    "totalBet": 10000.0,
+    "totalWin": 10270.250000000047,
+    "rtp": 1.0270250000000047,
+    "rtpMargin95": 0.15919329271142046,
+    "variance": 65.96861839937523,
+    "standardDeviation": 8.12210677099084,
+    "averageWin": 1.0270250000000047,
+    "hits": 4480,
+    "hitFrequency": 0.448,
+    "hitOneIn": 2.232142857142857,
+    "maxWin": 426.34999999999997,
+    "fairPrice": 1.0698177083333382
+  },
+  "mainGame": {
+    "baseSpins": 10000,
+    "rtp": 0.46815000000000206,
+    "winFrequency": 0.4421,
+    "avgAvalancheSteps": 0.6437
+  },
+  "bonusGame": {
+    "rtp": 0.5588750000000001,
+    "bonusCount": 143,
+    "entryProbability": 0.0143,
+    "entryOneIn": 69.93006993006993,
+    "averageWin": 39.08216783216784,
+    "medianWin": 19.75,
+    "variance": 3002.4963428529536,
+    "standardDeviation": 54.79503940004928,
+    "maxWin": 425.54999999999995,
+    "avgSpins": 11.083916083916083,
+    "avgRetriggers": 0.21678321678321677,
+    "avgFinalMultiplier": 8.006993006993007,
+    "maxFinalMultiplier": 17,
+    "regularCount": 127,
+    "regularOneIn": 78.74015748031496,
+    "regularAverageWin": 28.362992125984253,
+    "regularMedianWin": 18.05,
+    "superCount": 16,
+    "superOneIn": 625.0,
+    "superAverageWin": 124.165625,
+    "superMedianWin": 86.375,
+    "superAvgStickyWildsAtEnd": 0.6875
+  },
+  "winDistribution": {
+    "0x": 0.552,
+    "0-1x": 0.2884,
+    "1-5x": 0.1352,
+    "5-20x": 0.0172,
+    "20-100x": 0.0058,
+    "100-1000x": 0.0014,
+    "1000x+": 0.0
+  },
+  "config": {
+    "reel1": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      15.0,
+      17.0,
+      18.0,
+      19.0,
+      0.0,
+      3.0
+    ],
+    "reel2to5": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      14.0,
+      15.0,
+      16.0,
+      19.0,
+      5.0,
+      3.0
+    ],
+    "paytable": {
+      "BLACK_DIAMOND": [
+        0.5,
+        1.5,
+        5.0
+      ],
+      "DIAMOND": [
+        0.4,
+        1.0,
+        3.0
+      ],
+      "RUBY": [
+        0.3,
+        0.75,
+        2.0
+      ],
+      "OPAL": [
+        0.25,
+        0.5,
+        1.5
+      ],
+      "SAPPHIRE": [
+        0.1,
+        0.25,
+        0.75
+      ],
+      "EMERALD": [
+        0.1,
+        0.2,
+        0.6
+      ],
+      "TOPAZ": [
+        0.05,
+        0.15,
+        0.5
+      ],
+      "QUARTZ": [
+        0.05,
+        0.1,
+        0.4
+      ]
+    }
+  }
+}
