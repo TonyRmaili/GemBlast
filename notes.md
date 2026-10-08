@@ -11,8 +11,8 @@ ValueConfig
    Returns these values from around the app. 
    Idea here is to have an easier way to see and adjust games rtp and other relevant values. Implemented improvements such as 3 stepper buttons and dropped the totalWeight = 100 restriction. 
 
-CsvWriter
-   Will change/be replaced. Test file for java Read/Write class
+GemWriter
+   Outputs json, csv and txt for the same simulated run. Creates a unique named folder (taking in a hashcode of config, timestamp and some output results) containing the 3 files
 
 DesktopLauncher
    Launches game via its own main(). This is created because of libGDX and maven not exactly compatible. 
@@ -22,7 +22,7 @@ MathPlayground
    Very smooth workflow I am used to from working with Python. 
 
 ShatterPanel
-   GUI element for feature shatterCollect. 
+   GUI element for the new feature shatterCollect. 
 
 SlothMath
    Biggest part of the project. Here is all current and future math methods that run the game. GameEngine and other files uses these methods in the game loop logic.
@@ -43,8 +43,8 @@ Version 2
 * Once all the methods were implemented the game was runnable and outputting identical values as before. From here I wanted to be able to access the values (mainly reel weights and pay-table) easily and configure them for balancing. ReelWeights.java got replaced by the files ValueConfig and ConfigContent. Game now can make changes to these values, apply and save, all methods relying on these now reads from the weights.json file. Developer can now easily adjust, test, observe. This is not complete, still needs a proper output from simulator to connect the whole workflow for balancing the game. 
 * Before putting in work for balancing the game needs more features. At this point I developed two features exclusive for freespin modes (1 for super free only, see **Features** below). After these two features the overall RTP went up to 106.7
   the free spins now contributing around 60% (near the goal) but the base game needs to be brought down. 
-* Time to implement the statistics output as CSV and JSON 
-* Balance 
+* To make the balancing easier i wanted to try having different forms of outputs that help read the values used once i change the configs. New file GemWriter replaced CsvWriter and has an all-in-one output with text, csv and json of the same result.
+* Balancing time, see below and output folder. 
 * NEW IDEAS for version 3
 
 
@@ -94,5 +94,12 @@ Also scales at the end of the spin mode
 
 
 
+** balancing attempts ** 
 
+Quartz: 19 -> 17 ; 0.4 -> 0.3 ; 106.32
+Scatter: 3->4 (bad!), Sapphire lowered pay reel5; 196
+Scatter: 3 ->2 ; less pay overall ; 64% huge drop
+scatter: 2 > 2.5 79.97%
+scatter: 2.6 ; 85
 
+96% reached. Reduced the scatter was a big deal. Reduced the density of low paying symbols (they were high) and reduced paytable to zone in on 96

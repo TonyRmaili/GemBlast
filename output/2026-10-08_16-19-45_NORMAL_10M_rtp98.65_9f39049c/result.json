@@ -1,0 +1,130 @@
+{
+  "run": {
+    "mode": "NORMAL",
+    "rounds": 10000000,
+    "seed": 11084994217400,
+    "price": 1.0,
+    "targetRtp": 0.96
+  },
+  "overall": {
+    "totalBet": 1.0E7,
+    "totalWin": 9864849.029945018,
+    "rtp": 0.9864849029945018,
+    "rtpMargin95": 0.004769317820635297,
+    "variance": 59.21072593250059,
+    "standardDeviation": 7.69485061144793,
+    "averageWin": 0.9864849029945018,
+    "hits": 4427720,
+    "hitFrequency": 0.442772,
+    "hitOneIn": 2.2584987307237134,
+    "maxWin": 1248.54,
+    "fairPrice": 1.0275884406192728
+  },
+  "mainGame": {
+    "baseSpins": 10000000,
+    "rtp": 0.4400220180013215,
+    "winFrequency": 0.4362254,
+    "avgAvalancheSteps": 0.6266162
+  },
+  "bonusGame": {
+    "rtp": 0.5464628849999998,
+    "bonusCount": 152667,
+    "entryProbability": 0.0152667,
+    "entryOneIn": 65.5020403885581,
+    "averageWin": 35.79443396411797,
+    "medianWin": 19.24,
+    "variance": 2521.28787959128,
+    "standardDeviation": 50.21242754130974,
+    "maxWin": 1246.72,
+    "avgSpins": 10.826111733380495,
+    "avgRetriggers": 0.16522234667609895,
+    "avgFinalMultiplier": 7.840135720227685,
+    "maxFinalMultiplier": 36,
+    "regularCount": 135961,
+    "regularOneIn": 73.55050345319614,
+    "regularAverageWin": 26.836136612705246,
+    "regularMedianWin": 16.29,
+    "superCount": 16706,
+    "superOneIn": 598.5873338920148,
+    "superAverageWin": 108.70111816113962,
+    "superMedianWin": 85.53,
+    "superAvgStickyWildsAtEnd": 0.6361187597270441
+  },
+  "winDistribution": {
+    "0x": 0.557228,
+    "0-1x": 0.2906418,
+    "1-5x": 0.1283804,
+    "5-20x": 0.0159993,
+    "20-100x": 0.0065463,
+    "100-1000x": 0.0012035,
+    "1000x+": 7.0E-7
+  },
+  "config": {
+    "reel1": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      15.0,
+      16.0,
+      16.0,
+      17.0,
+      0.0,
+      2.8
+    ],
+    "reel2to5": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      5.0,
+      2.9
+    ],
+    "paytable": {
+      "BLACK_DIAMOND": [
+        0.5,
+        1.5,
+        5.0
+      ],
+      "DIAMOND": [
+        0.4,
+        1.0,
+        3.0
+      ],
+      "RUBY": [
+        0.3,
+        0.75,
+        2.0
+      ],
+      "OPAL": [
+        0.25,
+        0.5,
+        1.5
+      ],
+      "SAPPHIRE": [
+        0.1,
+        0.25,
+        0.65
+      ],
+      "EMERALD": [
+        0.1,
+        0.2,
+        0.6
+      ],
+      "TOPAZ": [
+        0.07,
+        0.15,
+        0.5
+      ],
+      "QUARTZ": [
+        0.05,
+        0.1,
+        0.3
+      ]
+    }
+  }
+}
