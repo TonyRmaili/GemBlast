@@ -324,16 +324,16 @@ public final class SlotMath {
             return 1.0;
         }
         else if (mode == GameMode.BOOST_SCATTER){
-            return 1.43;
+            return 3.85;
         }
         else if (mode == GameMode.BOOST_WILD){
-            return 1.20;
+            return 1.54;
         }
         else if (mode == GameMode.BUY_FREE_SPINS){
-            return 30;
+            return 28.03;
         }
         else if (mode == GameMode.BUY_SUPER_FREE_SPINS){
-            return 115.3;
+            return 112.35;
         }
 
         throw notImplemented("price(" + mode + ")");

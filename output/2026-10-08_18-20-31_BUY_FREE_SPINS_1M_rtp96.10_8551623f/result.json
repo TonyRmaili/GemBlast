@@ -1,0 +1,122 @@
+{
+  "run": {
+    "mode": "BUY_FREE_SPINS",
+    "rounds": 1000000,
+    "seed": 18338268273100,
+    "price": 28.03,
+    "targetRtp": 0.96
+  },
+  "overall": {
+    "totalBet": 2.803E7,
+    "totalWin": 2.693780109000035E7,
+    "rtp": 0.9610346446664413,
+    "rtpMargin95": 0.0022845205030813625,
+    "variance": 1067.3925641572696,
+    "standardDeviation": 32.670974337433975,
+    "averageWin": 26.93780109000035,
+    "hits": 997114,
+    "hitFrequency": 0.997114,
+    "hitOneIn": 1.0028943531030554,
+    "maxWin": 872.2,
+    "fairPrice": 28.060209468750365
+  },
+  "mainGame": {
+    "baseSpins": 0
+  },
+  "bonusGame": {
+    "rtp": 0.9610346446664413,
+    "bonusCount": 1000000,
+    "entryProbability": 1.0,
+    "entryOneIn": 1.0,
+    "averageWin": 26.93780109000035,
+    "medianWin": 16.6,
+    "variance": 1067.3925641572696,
+    "standardDeviation": 32.670974337433975,
+    "maxWin": 872.2,
+    "avgSpins": 10.785875,
+    "avgRetriggers": 0.157175,
+    "avgFinalMultiplier": 7.761958,
+    "maxFinalMultiplier": 40,
+    "regularCount": 1000000,
+    "regularOneIn": 1.0,
+    "regularAverageWin": 26.9378010899998,
+    "regularMedianWin": 16.6
+  },
+  "winDistribution": {
+    "0x": 0.002886,
+    "0-1x": 0.033356,
+    "1-5x": 0.150374,
+    "5-20x": 0.376637,
+    "20-100x": 0.400849,
+    "100-1000x": 0.035898,
+    "1000x+": 0.0
+  },
+  "config": {
+    "reel1": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      15.0,
+      16.0,
+      16.0,
+      17.0,
+      0.0,
+      2.9
+    ],
+    "reel2to5": [
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      14.0,
+      15.0,
+      16.0,
+      17.0,
+      5.0,
+      2.8
+    ],
+    "paytable": {
+      "BLACK_DIAMOND": [
+        0.5,
+        1.5,
+        5.0
+      ],
+      "DIAMOND": [
+        0.4,
+        1.0,
+        3.0
+      ],
+      "RUBY": [
+        0.3,
+        0.75,
+        2.0
+      ],
+      "OPAL": [
+        0.25,
+        0.5,
+        1.5
+      ],
+      "SAPPHIRE": [
+        0.15,
+        0.25,
+        0.65
+      ],
+      "EMERALD": [
+        0.1,
+        0.2,
+        0.6
+      ],
+      "TOPAZ": [
+        0.07,
+        0.15,
+        0.5
+      ],
+      "QUARTZ": [
+        0.05,
+        0.1,
+        0.3
+      ]
+    }
+  }
+}

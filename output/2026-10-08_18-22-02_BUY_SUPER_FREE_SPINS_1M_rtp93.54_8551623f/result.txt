@@ -1,0 +1,37 @@
+==== Super Free Spins - 1,000,000 rounds (seed 18420989355600) ====
+
+OVERALL (1,000,000 rounds, price 115.30x bet)
+  Total bet                          115,300,000.00x
+  Total win                          107,851,763.01x
+  RTP                                93.54%  (+/- 0.15%, 95%)
+  Variance (per round)               7,717.10
+  Standard deviation (per round)     87.85x
+  Hit frequency (any win)            99.99%  (1 in 1)
+  Max win                            2,447.67x
+  Fair price at 96.00%               112.35x bet
+
+MAIN GAME (base spin + avalanches)
+  RTP                                - (bought bonus, no base spin)
+
+BONUS GAME (free spins, entire round)
+  Bonus RTP                          93.54%
+  Bonus entry probability            100.00%  (1 in 1)
+  Average win                        107.85x
+  Median win                         85.62x
+  Variance                           7,717.10
+  Standard deviation                 87.85x
+  Max bonus win                      2,447.67x
+  Avg spins per bonus                10.78
+  Retriggers per bonus               0.16
+  Final multiplier (avg / max)       x8.30 / x41
+  Super free spins: 1 in / avg / median 1 / 107.85x / 85.62x
+  Super: sticky wilds left at end    0.64
+
+WIN DISTRIBUTION (share of rounds)
+  0x                                 0.01%
+  0-1x                               0.05%
+  1-5x                               0.33%
+  5-20x                              4.45%
+  20-100x                            53.65%
+  100-1000x                          41.48%
+  1000x+                             0.02%

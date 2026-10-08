@@ -1,0 +1,40 @@
+==== Scatter Booster - 10,000,000 rounds (seed 16744342616500) ====
+
+OVERALL (10,000,000 rounds, price 3.85x bet)
+  Total bet                          38,500,000.00x
+  Total win                          36,925,914.77x
+  RTP                                95.91%  (+/- 0.31%, 95%)
+  Variance (per round)               360.26
+  Standard deviation (per round)     18.98x
+  Hit frequency (any win)            47.79%  (1 in 2)
+  Max win                            2,611.63x
+  Fair price at 96.00%               3.85x bet
+
+MAIN GAME (base spin + avalanches)
+  RTP                                9.82%
+  Win frequency per round            43.68%
+  Avg avalanche steps per spin       0.63
+
+BONUS GAME (free spins, entire round)
+  Bonus RTP                          86.09%
+  Bonus entry probability            8.66%  (1 in 12)
+  Average win                        38.26x
+  Median win                         20.53x
+  Variance                           2,803.05
+  Standard deviation                 52.94x
+  Max bonus win                      2,611.63x
+  Avg spins per bonus                10.78
+  Retriggers per bonus               0.16
+  Final multiplier (avg / max)       x7.83 / x41
+  Regular free spins: 1 in / avg / median 13 / 26.91x / 16.60x
+  Super free spins: 1 in / avg / median 82 / 107.90x / 85.69x
+  Super: sticky wilds left at end    0.64
+
+WIN DISTRIBUTION (share of rounds)
+  0x                                 52.21%
+  0-1x                               28.41%
+  1-5x                               11.40%
+  5-20x                              3.50%
+  20-100x                            3.70%
+  100-1000x                          0.78%
+  1000x+                             0.00%

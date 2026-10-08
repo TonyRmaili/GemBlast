@@ -89,6 +89,7 @@ Also scales at the end of the spin mode
 3. Diamond grid with locked parts (3-5-7-5-3) => 1575 ways
 
 4. TheoreticalMath were i can output expected values, etc.
+5. Data visualization / graphs
 
 
 

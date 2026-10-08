@@ -1,0 +1,40 @@
+==== Wild Booster - 10,000,000 rounds (seed 17080302274700) ====
+
+OVERALL (10,000,000 rounds, price 1.54x bet)
+  Total bet                          15,400,000.00x
+  Total win                          14,791,587.92x
+  RTP                                96.05%  (+/- 0.32%, 95%)
+  Variance (per round)               64.45
+  Standard deviation (per round)     8.03x
+  Hit frequency (any win)            59.87%  (1 in 2)
+  Max win                            1,439.64x
+  Fair price at 96.00%               1.54x bet
+
+MAIN GAME (base spin + avalanches)
+  RTP                                58.45%
+  Win frequency per round            59.47%
+  Avg avalanche steps per spin       0.86
+
+BONUS GAME (free spins, entire round)
+  Bonus RTP                          37.60%
+  Bonus entry probability            1.61%  (1 in 62)
+  Average win                        36.02x
+  Median win                         19.65x
+  Variance                           2,514.26
+  Standard deviation                 50.14x
+  Max bonus win                      1,439.54x
+  Avg spins per bonus                10.79
+  Retriggers per bonus               0.16
+  Final multiplier (avg / max)       x7.83 / x39
+  Regular free spins: 1 in / avg / median 70 / 26.89x / 16.69x
+  Super free spins: 1 in / avg / median 555 / 108.31x / 85.66x
+  Super: sticky wilds left at end    0.63
+
+WIN DISTRIBUTION (share of rounds)
+  0x                                 40.13%
+  0-1x                               31.05%
+  1-5x                               24.29%
+  5-20x                              3.63%
+  20-100x                            0.76%
+  100-1000x                          0.13%
+  1000x+                             0.00%
