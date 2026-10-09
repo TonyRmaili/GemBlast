@@ -104,3 +104,10 @@ scatter: 2 > 2.5 79.97%
 scatter: 2.6 ; 85
 
 96% reached. Reduced the scatter was a big deal. Reduced the density of low paying symbols (they were high) and reduced paytable to zone in on 96
+
+
+RoadMap v3
+
+1. data visualization and graphs
+2. TheoryMath; calculate expected values
+3. Grid rework > diamond 3-5-7-5-3 

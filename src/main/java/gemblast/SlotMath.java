@@ -1,5 +1,12 @@
 package gemblast;
 
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,9 +35,17 @@ public final class SlotMath {
 
     public static final int SHATTER_METER_SIZE = 10;
     private final ValueConfig config;
+    public static final int BINS_PER_DECADE = 5;
+    public static final int HISTOGRAM_MAX = 10000;
+
+    public final double histMin;
+    public final int histBins;
+
 
     public SlotMath(ValueConfig config) {
         this.config = config;
+        this.histMin = histogramMin();
+        this.histBins = totalBins();
     }
 
     // ================================================================ 1. how symbols land
@@ -318,7 +333,6 @@ public final class SlotMath {
     // ================================================================ 5. shop
 
     /** Price of one round in this mode, as a multiple of the bet. A normal spin always costs 1 bet. */
-    // dummy prices for now until verified rtp is ran through simulator
     public double price(GameMode mode) {
         if (mode == GameMode.NORMAL) {
             return 1.0;
@@ -419,7 +433,6 @@ public final class SlotMath {
     }
 
     public int distributionBucket(double win, double[] limits) {
-
         for (int i = 1; i < limits.length ; i++) {
             if (win == 0) {
                 return 0;
@@ -436,7 +449,68 @@ public final class SlotMath {
     public double fairPrice(double averageWin) {
         return averageWin/TARGET_RTP;
     }
-    // ================================================================
+    // ================================================================ graph methods
+
+    public double histogramMin(){
+        double minValue = Double.MAX_VALUE;
+        for (List<Double> symbolPays : config.paytable.values()) {
+            for (double pay : symbolPays) {
+                if ( pay < minValue){
+                    minValue = pay;
+                }
+            }
+        }
+
+        return Math.pow(10,Math.floor(Math.log10(minValue)));
+    }
+
+    public int totalBins(){
+        double minValue = histogramMin();
+        double decades = Math.log10(HISTOGRAM_MAX / minValue);
+
+        return (int) Math.round(decades * BINS_PER_DECADE);
+    }
+
+    public double histogramEdge(int k){
+        double ratio = (double) k / BINS_PER_DECADE;
+        return histMin * Math.pow(10,ratio);
+    }
+
+    public int histogramBin(double win){
+        int k = (int) Math.floor(Math.log10(win/histMin)*BINS_PER_DECADE);
+
+        if (k < 0){
+            k = 0;
+        }
+        else if (k > (histBins -1) ){
+            k = histBins -1;
+        }
+        return k;
+    }
+
+
+    public void plotWinDistribution(Map<Integer,Double> winDistribution,String title){
+
+
+//        XYChart chart = new XYChartBuilder()
+//        .width(800).height(500)
+//        .title(title)
+//        .build();
+//
+//        List<Integer> names  = new ArrayList<>(winDistribution.keySet());
+//        List<Double> shares = new ArrayList<>(winDistribution.values());
+//
+//        chart.addSeries("rounds", names, shares);
+//
+//        try{
+//
+//            Files.createDirectories(Path.of("graphs"));
+//            BitmapEncoder.saveBitmap(chart, "graphs" + "/"+ title, BitmapEncoder.BitmapFormat.PNG);
+//        } catch (IOException e){
+//          System.out.print(e);
+//        }
+
+    }
 
     private static UnsupportedOperationException notImplemented(String what) {
         return new UnsupportedOperationException("TODO SlotMath." + what + " is not implemented yet");

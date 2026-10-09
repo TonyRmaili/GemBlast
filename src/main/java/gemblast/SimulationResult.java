@@ -8,10 +8,10 @@ import java.util.Map;
 
 /**
  * The statistics of one simulation run. All amounts are multiples of the bet.
- *
+
  * The nested Builder collects RAW data while the simulation runs (counts, sums, sums of squares,
  * every bonus win). build() turns it into statistics with the formulas in SlotMath.
- *
+
  * Two views of the same statistics:
  *   rows()  formatted text for the screen ("85.34%  (+/- 0.70%, 95%)")
  *   data()  raw numbers for files, by section: {"overall": {"rtp": 0.8534, ...}, "bonusGame": {...}, ...}
@@ -21,6 +21,9 @@ public final class SimulationResult {
     /** Win distribution buckets (total round win, x bet): 0, under 1, 1-5, 5-20, 20-100, 100-1000, 1000+. */
     static final double[] BUCKET_LIMITS = {0, 1, 5, 20, 100, 1000};
     static final String[] BUCKET_NAMES = {"0x", "0-1x", "1-5x", "5-20x", "20-100x", "100-1000x", "1000x+"};
+    private final long[] winHistogram;
+    private final long zeroWins;
+
 
     /** One line of output. A row with value == null is a section heading. */
     public static final class Row {
@@ -41,10 +44,21 @@ public final class SimulationResult {
     private final Map<String, Map<String, Object>> data;
     private final String title;
 
-    private SimulationResult(String title, List<Row> rows, Map<String, Map<String, Object>> data) {
+    private SimulationResult(String title, List<Row> rows, Map<String, Map<String, Object>> data,
+                             long[] winHistogram,long zeroWins) {
         this.data = data;
         this.title = title;
         this.rows = rows;
+        this.winHistogram = winHistogram;
+        this.zeroWins = zeroWins;
+    }
+
+    public long[] winHistogram(){
+        return winHistogram;
+    }
+
+    public long zeroWins(){
+        return zeroWins;
     }
 
     public String title() {
@@ -99,11 +113,16 @@ public final class SimulationResult {
         private double sumBonus, sumBonusSq;
         private long bonusSpins, retriggers, sumFinalMultiplier, maxFinalMultiplier, sumStickyAtEnd;
 
+        // graphs
+        private final long[] winHistogram;
+        private long zeroWins;
+
         public Builder(SlotMath math, GameMode mode, double price, long seed) {
             this.math = math;
             this.mode = mode;
             this.price = price;
             this.seed = seed;
+            this.winHistogram = new long[math.histBins];
         }
 
         public void add(RoundResult round) {
@@ -114,6 +133,10 @@ public final class SimulationResult {
             maxWin = Math.max(maxWin, win);
             if (win > 0) {
                 hits++;
+                winHistogram[math.histogramBin(win)]++;
+            }
+            else{
+                zeroWins++;
             }
             buckets[math.distributionBucket(win, BUCKET_LIMITS)]++;
 
@@ -272,7 +295,7 @@ public final class SimulationResult {
             }
 
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";
-            return new SimulationResult(title, rows, data);
+            return new SimulationResult(title, rows, data, winHistogram, zeroWins);
         }
 
         /** Adds an empty section to the data, in order, and returns it so it can be filled. */
