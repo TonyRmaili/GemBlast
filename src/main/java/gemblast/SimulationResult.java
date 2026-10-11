@@ -23,6 +23,8 @@ public final class SimulationResult {
     static final String[] BUCKET_NAMES = {"0x", "0-1x", "1-5x", "5-20x", "20-100x", "100-1000x", "1000x+"};
     private final long[] winHistogram;
     private final long zeroWins;
+    private double[] winSumHistogram;
+
 
 
     /** One line of output. A row with value == null is a section heading. */
@@ -45,12 +47,17 @@ public final class SimulationResult {
     private final String title;
 
     private SimulationResult(String title, List<Row> rows, Map<String, Map<String, Object>> data,
-                             long[] winHistogram,long zeroWins) {
+                             long[] winHistogram,long zeroWins, double[] winSumHistogram) {
         this.data = data;
         this.title = title;
         this.rows = rows;
         this.winHistogram = winHistogram;
         this.zeroWins = zeroWins;
+        this.winSumHistogram = winSumHistogram;
+    }
+
+    public double[] winSumHistogram(){
+        return winSumHistogram;
     }
 
     public long[] winHistogram(){
@@ -116,6 +123,8 @@ public final class SimulationResult {
         // graphs
         private final long[] winHistogram;
         private long zeroWins;
+        private double[] winSumHistogram;
+
 
         public Builder(SlotMath math, GameMode mode, double price, long seed) {
             this.math = math;
@@ -123,6 +132,8 @@ public final class SimulationResult {
             this.price = price;
             this.seed = seed;
             this.winHistogram = new long[math.histBins];
+            this.winSumHistogram = new double[math.histBins];
+
         }
 
         public void add(RoundResult round) {
@@ -134,6 +145,7 @@ public final class SimulationResult {
             if (win > 0) {
                 hits++;
                 winHistogram[math.histogramBin(win)]++;
+                winSumHistogram[math.histogramBin(win)]+= win;
             }
             else{
                 zeroWins++;
@@ -295,7 +307,8 @@ public final class SimulationResult {
             }
 
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";
-            return new SimulationResult(title, rows, data, winHistogram, zeroWins);
+
+            return new SimulationResult(title, rows, data, winHistogram, zeroWins,winSumHistogram);
         }
 
         /** Adds an empty section to the data, in order, and returns it so it can be filled. */

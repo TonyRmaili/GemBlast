@@ -84,8 +84,6 @@ Also scales at the end of the spin mode
    A rare symbol (similar density to wild) that can be clicked
    opens a choice 1 of 3 hidden cells that contains something useful to complete a winning
    combo
-2. Line Combos (old)
-   if 5 unique gems land in a row something triggers "something"
 3. Diamond grid with locked parts (3-5-7-5-3) => 1575 ways
 
 4. TheoreticalMath were i can output expected values, etc.
