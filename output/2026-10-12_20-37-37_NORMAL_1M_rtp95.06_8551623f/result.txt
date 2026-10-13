@@ -1,0 +1,40 @@
+==== Normal spin - 1,000,000 rounds (seed 26750343731200) ====
+
+OVERALL (1,000,000 rounds, price 1.00x bet)
+  Total bet                          1,000,000.00x
+  Total win                          950,553.48x
+  RTP                                95.06%  (+/- 1.42%, 95%)
+  Variance (per round)               52.73
+  Standard deviation (per round)     7.26x
+  Hit frequency (any win)            44.28%  (1 in 2)
+  Max win                            773.79x
+  Fair price at 96.00%               0.99x bet
+
+MAIN GAME (base spin + avalanches)
+  RTP                                44.54%
+  Win frequency per round            43.67%
+  Avg avalanche steps per spin       0.63
+
+BONUS GAME (free spins, entire round)
+  Bonus RTP                          50.52%
+  Bonus entry probability            1.43%  (1 in 70)
+  Average win                        35.33x
+  Median win                         19.41x
+  Variance                           2,359.47
+  Standard deviation                 48.57x
+  Max bonus win                      773.79x
+  Avg spins per bonus                10.80
+  Retriggers per bonus               0.16
+  Final multiplier (avg / max)       x7.78 / x29
+  Regular free spins: 1 in / avg / median 78 / 26.63x / 16.55x
+  Super free spins: 1 in / avg / median 662 / 108.93x / 86.24x
+  Super: sticky wilds left at end    0.64
+
+WIN DISTRIBUTION (share of rounds)
+  0x                                 55.72%
+  0-1x                               29.02%
+  1-5x                               12.96%
+  5-20x                              1.57%
+  20-100x                            0.62%
+  100-1000x                          0.11%
+  1000x+                             0.00%

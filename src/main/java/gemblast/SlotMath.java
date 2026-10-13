@@ -7,7 +7,7 @@ import java.util.Map;
 public final class SlotMath {
 
     // ================================================================ rules (design choices, change freely)
-
+    private final ValueConfig config;
     /** Wins need at least this many adjacent reels from the left. Also used by the pay-table display. */
     public static final int MIN_WIN_LENGTH = 3;
 
@@ -25,14 +25,15 @@ public final class SlotMath {
     public static final int SUPER_SCATTERS  = 4;
     public static final int RETRIGGER_SCATTERS  = 3;
     public static final int MULTIPLIER_START  = 1;
-
     public static final int SHATTER_METER_SIZE = 10;
-    private final ValueConfig config;
+
+    // graph constants
     public static final int BINS_PER_DECADE = 5;
     public static final int HISTOGRAM_MAX = 10000;
-
     public final double histMin;
     public final int histBins;
+    public final int CHECKPOINT_START = 100;
+    public final int CHECKPOINT_PER_DECADE = 10;
 
 
     public SlotMath(ValueConfig config) {
@@ -442,8 +443,8 @@ public final class SlotMath {
     public double fairPrice(double averageWin) {
         return averageWin/TARGET_RTP;
     }
-    // ================================================================ graph methods
 
+    // ================================================================ graph methods
     public double histogramMin(){
         double minValue = Double.MAX_VALUE;
         for (List<Double> symbolPays : config.paytable.values()) {
@@ -482,28 +483,24 @@ public final class SlotMath {
     }
 
 
-    public void plotWinDistribution(Map<Integer,Double> winDistribution,String title){
+    public double[] exceedance(long[] counts, long rounds){
+        long total = 0;
+        double[] running = new double[counts.length];
 
+        for (int k = counts.length-1; k >= 0; k--){
+            total += counts[k];
 
-//        XYChart chart = new XYChartBuilder()
-//        .width(800).height(500)
-//        .title(title)
-//        .build();
-//
-//        List<Integer> names  = new ArrayList<>(winDistribution.keySet());
-//        List<Double> shares = new ArrayList<>(winDistribution.values());
-//
-//        chart.addSeries("rounds", names, shares);
-//
-//        try{
-//
-//            Files.createDirectories(Path.of("graphs"));
-//            BitmapEncoder.saveBitmap(chart, "graphs" + "/"+ title, BitmapEncoder.BitmapFormat.PNG);
-//        } catch (IOException e){
-//          System.out.print(e);
-//        }
-
+            running[k] = (double) total/rounds;
+        }
+        return running;
     }
+    // checkpoint(j) = round( START × 10^(j / PER_DECADE) )
+    public long checkpointAt(int j){
+        return Math.round(CHECKPOINT_START * Math.pow(10,((double) j /CHECKPOINT_PER_DECADE)));
+    }
+
+
+
 
     private static UnsupportedOperationException notImplemented(String what) {
         return new UnsupportedOperationException("TODO SlotMath." + what + " is not implemented yet");

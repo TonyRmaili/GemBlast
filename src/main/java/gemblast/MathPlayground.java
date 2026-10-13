@@ -1,22 +1,36 @@
 package gemblast;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Random;
-import java.util.List;
+import java.util.*;
 
 /** Scratch file for testing SlotMath without the game. Click the green arrow next to main to run it. */
 public class MathPlayground {
 
     public static void main(String[] args) {
-        ValueConfig config = ValueConfig.load();     // reads weights.json from the project root
-        SlotMath math = new SlotMath(config);
-        Random rng = new Random(44);                 // fixed seed = same results every run
-        Board board = new Board(5,3);
+        ValueConfig config = ValueConfig.load();
+        TheoreticalMath mathTheory = new TheoreticalMath(config);
 
 
-        math.drawSymbol(0,rng);
-        math.drawSymbol(1,rng);
+
+        System.out.print(mathTheory.firstGridRTP());
+
+
+
+
+
+
+//        for (Symbol symbol : Symbol.values()){
+//            mathTheory.cellProbability(symbol.toString());
+//        }
+
+
+
+//        SlotMath math = new SlotMath(config);
+//        Random rng = new Random(44);
+//        Board board = new Board(5,3);
+//
+//
+//        math.drawSymbol(0,rng);
+//        math.drawSymbol(1,rng);
 
         // new feature testing uniqueGemsInRow()
 //        int rowIndex = 0;

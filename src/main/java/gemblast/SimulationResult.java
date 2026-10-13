@@ -23,7 +23,9 @@ public final class SimulationResult {
     static final String[] BUCKET_NAMES = {"0x", "0-1x", "1-5x", "5-20x", "20-100x", "100-1000x", "1000x+"};
     private final long[] winHistogram;
     private final long zeroWins;
-    private double[] winSumHistogram;
+    private final double[] winSumHistogram;
+    private final List<Long> checkpointRounds;
+    private final List<Double> checkpointSums;
 
 
 
@@ -47,13 +49,25 @@ public final class SimulationResult {
     private final String title;
 
     private SimulationResult(String title, List<Row> rows, Map<String, Map<String, Object>> data,
-                             long[] winHistogram,long zeroWins, double[] winSumHistogram) {
+                             long[] winHistogram,long zeroWins, double[] winSumHistogram,
+                             List<Long> checkpointRounds, List<Double> checkpointSums
+    ) {
         this.data = data;
         this.title = title;
         this.rows = rows;
         this.winHistogram = winHistogram;
         this.zeroWins = zeroWins;
         this.winSumHistogram = winSumHistogram;
+        this.checkpointRounds = checkpointRounds;
+        this.checkpointSums = checkpointSums;
+    }
+
+    public List<Long> checkpointRounds(){
+        return checkpointRounds;
+    }
+
+    public List<Double> checkpointSums(){
+        return checkpointSums;
     }
 
     public double[] winSumHistogram(){
@@ -105,7 +119,7 @@ public final class SimulationResult {
 
         // overall
         private long rounds;
-        private double sumWin, sumWinSq, maxWin;
+        private double sumWin, sumWinSq, maxWin, sumFirstGrid;
         private long hits;
         private final long[] buckets = new long[BUCKET_NAMES.length];
 
@@ -123,7 +137,11 @@ public final class SimulationResult {
         // graphs
         private final long[] winHistogram;
         private long zeroWins;
-        private double[] winSumHistogram;
+        private final double[] winSumHistogram;
+        private int checkpointIndex;
+        private long nextCheckpoint;
+        private final List<Long> checkpointRounds = new ArrayList<>();
+        private final List<Double> checkpointSums = new ArrayList<>();
 
 
         public Builder(SlotMath math, GameMode mode, double price, long seed) {
@@ -133,13 +151,22 @@ public final class SimulationResult {
             this.seed = seed;
             this.winHistogram = new long[math.histBins];
             this.winSumHistogram = new double[math.histBins];
-
+            this.nextCheckpoint = math.checkpointAt(0);
         }
 
         public void add(RoundResult round) {
             rounds++;
             double win = round.totalMultiplier();
             sumWin += win;
+
+            if (rounds == nextCheckpoint){
+                checkpointRounds.add(rounds);
+                checkpointSums.add(sumWin);
+                checkpointIndex++;
+                nextCheckpoint = math.checkpointAt(checkpointIndex);
+            }
+
+
             sumWinSq += win * win;
             maxWin = Math.max(maxWin, win);
             if (win > 0) {
@@ -156,6 +183,11 @@ public final class SimulationResult {
                 double base = round.baseMultiplier();
                 sumBase += base;
                 baseSpins++;
+
+                if (!round.baseSpin.cascades.isEmpty()) {
+                    sumFirstGrid += round.baseSpin.cascades.get(0).totalMultiplier();
+                }
+
                 baseAvalancheSteps += round.baseSpin.cascades.size();
                 if (base > 0) {
                     baseHits++;
@@ -183,6 +215,16 @@ public final class SimulationResult {
             List<Row> rows = new ArrayList<>();
             Map<String, Map<String, Object>> data = new LinkedHashMap<>();   // raw numbers for the files
 
+            // make sure the convergence line ends exactly at the final RTP
+            boolean endRecorded = !checkpointRounds.isEmpty()
+                    && checkpointRounds.get(checkpointRounds.size() - 1) == rounds;
+            if (!endRecorded && rounds > 0) {
+                checkpointRounds.add(rounds);
+                checkpointSums.add(sumWin);
+            }
+
+
+
             double totalBet = math.totalBet(rounds, price);
             double variance = math.variance(rounds, sumWin, sumWinSq);
             double sd = math.standardDeviation(variance);
@@ -191,6 +233,9 @@ public final class SimulationResult {
             double averageWin = math.average(sumWin, rounds);
             double fairPrice = math.fairPrice(averageWin);
             double hitFrequency = math.frequency(hits, rounds);
+
+            double firstGridRtp = math.rtp(sumFirstGrid, totalBet);
+
 
             // --- the run itself: everything needed to understand (and repeat) this file ---
             Map<String, Object> run = section(data, "run");
@@ -210,6 +255,7 @@ public final class SimulationResult {
             row(rows, "Hit frequency (any win)", pct(hitFrequency) + "  (1 in " + oneIn(hits, rounds) + ")");
             row(rows, "Max win", num(maxWin) + "x");
             row(rows, "Fair price at " + pct(SlotMath.TARGET_RTP), num(fairPrice) + "x bet");
+
 
             Map<String, Object> overall = section(data, "overall");
             overall.put("totalBet", totalBet);
@@ -238,9 +284,18 @@ public final class SimulationResult {
                 row(rows, "RTP", pct(baseRtp));
                 row(rows, "Win frequency per round", pct(baseWinFrequency));
                 row(rows, "Avg avalanche steps per spin", num(avgAvalancheSteps));
+                row(rows, "First grid RTP", pct(firstGridRtp));
                 mainGame.put("rtp", baseRtp);
                 mainGame.put("winFrequency", baseWinFrequency);
                 mainGame.put("avgAvalancheSteps", avgAvalancheSteps);
+                mainGame.put("firstGridRtp", firstGridRtp);
+
+                if (firstGridRtp > 0) {
+                    double avalancheFactor = baseRtp / firstGridRtp;
+                    row(rows, "Avalanche factor (base / first grid)", num(avalancheFactor) + "x");
+                    mainGame.put("avalancheFactor", avalancheFactor);
+                }
+
             } else {
                 row(rows, "RTP", "- (bought bonus, no base spin)");
             }
@@ -306,9 +361,11 @@ public final class SimulationResult {
                 winDistribution.put(BUCKET_NAMES[i], share);
             }
 
+
+
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";
 
-            return new SimulationResult(title, rows, data, winHistogram, zeroWins,winSumHistogram);
+            return new SimulationResult(title, rows, data, winHistogram, zeroWins, winSumHistogram, checkpointRounds, checkpointSums);
         }
 
         /** Adds an empty section to the data, in order, and returns it so it can be filled. */
