@@ -149,7 +149,8 @@ public class TheoreticalMath {
 
         }
         return total;
-
     }
+
+
 }
 

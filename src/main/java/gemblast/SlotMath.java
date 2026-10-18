@@ -42,15 +42,16 @@ public final class SlotMath {
         this.histBins = totalBins();
     }
 
-    // ================================================================ 1. how symbols land
-
+// ---------------------------- Grid methods --------------------------------
     /**
-     * One random symbol for one cell on the given reel (0 = leftmost), drawn with that reel's
-     * weights from config.weights(reel). Weight w out of a reel total T means probability w / T.
+     * Randomizes a symbol for one cell given a reel. current reel1 != (rest of reels)
+     * weights from dynamic ValueConfig.
+     * Weight total calculated here. 
      */
     public Symbol drawSymbol(int reel, Random rng) {
         double[] weights = config.weights(reel);
         double randomNumber = rng.nextDouble();
+
 
         double totalWeight = 0;
         for (double weight : weights){
@@ -74,7 +75,7 @@ public final class SlotMath {
 
     /**
      * Fills the board for a new spin: every cell that is NOT sticky gets a new symbol.
-     * Sticky cells (board.isSticky) keep their wild.
+     * isSticky checked regardless of superFreeSpin  (used as a control)
      */
     public void fillGrid(Board board, Random rng) {
         for (int row = 0; row < board.rowCount; row++){
@@ -89,10 +90,9 @@ public final class SlotMath {
 
     }
 
-    // ================================================================ 2. what pays
     /**
      * Every ways win on the current board, biggest first (the screen shows them in this order).
-     * For each win, build a Win with: the symbol, how many reels in a row matched, the number of ways,
+     * For each win, builds a Win object with: the symbol, how many reels in a row matched, the number of ways,
      * the pay per way (from config.pays), the total pay as a multiple of the bet, and the cells
      * that are part of it (cells[reel][row] = true). Empty list = no win.
      */
@@ -106,13 +106,13 @@ public final class SlotMath {
             }
 
             List<Integer> ways = new ArrayList<>();
-            int reelCount = 0;
+            int winningReelPosition = 0;
             boolean[][] cells = new boolean[board.reelCount][board.rowCount];
 
             for (int reel = 0; reel < board.reelCount; reel++){
                int symbolCounter = 0;
                for (int row = 0; row < board.rowCount; row++){
-                   if (symbol == board.get(reel,row) || board.get(reel,row) == Symbol.WILD){
+                   if (symbol == board.get(reel,row) || board.get(reel,row) == Symbol.WILD){  // wild cant land on reel1 anyway
                        symbolCounter += 1;
                        cells[reel][row] = true;
                    }
@@ -120,21 +120,21 @@ public final class SlotMath {
                if (symbolCounter == 0 ){
                    break;
                }
-               reelCount++;
+                winningReelPosition++;
                ways.add(symbolCounter);
            }
 
-            if (reelCount >= MIN_WIN_LENGTH){
+            if (winningReelPosition >= MIN_WIN_LENGTH){
                 int waysMultiplier = 1;
 
                 for (int way : ways) {
                     waysMultiplier *= way;
                 }
-                double paysMultiplier = pays[reelCount-MIN_WIN_LENGTH];
-                double totalPay = paysMultiplier*waysMultiplier;
+                double paysMultiplier = pays[winningReelPosition-MIN_WIN_LENGTH];
+                double totalPay = paysMultiplier * waysMultiplier;
                 Win win = new Win(
                         symbol,
-                        reelCount,
+                        winningReelPosition,
                         waysMultiplier,
                         paysMultiplier,
                         totalPay,
@@ -156,8 +156,6 @@ public final class SlotMath {
                     if (win.includes(reel,row)){
                         cells[reel][row] = true;
                     }
-
-
                 }
             }
         }
@@ -165,15 +163,13 @@ public final class SlotMath {
 
     }
 
-    // ================================================================ 3. avalanche
 
     /**
      * Removes the marked cells, lets the symbols above fall down, and fills the gaps at the top
      * with new symbols. Sticky wilds that are NOT removed stay exactly where they are.
-     * A removed sticky wild is used up: unlock it (board.setSticky(..., false)).
-     *
-     * @return newCells[reel][row] = true for every cell that received a NEW symbol
-     *         (the screen uses it to animate the drop)
+     * A removed sticky wild is used up
+     * newCells[reel][row] = true for every cell that received a NEW symbol
+     *  (the screen uses it to animate the drop)
      */
     public boolean[][] avalanche(Board board, boolean[][] removed, Random rng) {
         boolean[][] newCells = new boolean[board.reelCount][board.rowCount];
@@ -208,9 +204,7 @@ public final class SlotMath {
         return newCells;
     }
 
-    // ================================================================ 4. free spins
 
-    /** How many scatters are on this grid. */
     public int countScatters(Symbol[][] grid) {
         int scatterCount = 0;
         for (int reel = 0; reel < grid.length; reel++) {
@@ -226,7 +220,10 @@ public final class SlotMath {
 
 
 
-    /** Free spins awarded for this many scatters at the end of a base spin. 0 = no bonus. */
+    /** Free spins awarded for this many scatters at the end of a base spin. 0 = no bonus.
+     * Does not check for free vs super
+     * */
+
     public int freeSpinsAwarded(int scatterCount) {
         if (scatterCount >= FREE_SPINS_SCATTERS){
             return FREE_SPINS_AWARDED;
@@ -260,7 +257,8 @@ public final class SlotMath {
         return current + 1;
     }
 
-    /** Super free spins: lock the wilds currently on the board (board.setSticky). */
+    /** Super free spins only
+     *  lock the wilds currently on the board with setSticky). */
     public void lockStickyWilds(Board board) {
         for (int reel = 0; reel < board.reelCount; reel++) {
             for (int row = 0; row < board.rowCount; row++) {
@@ -326,7 +324,10 @@ public final class SlotMath {
 
     // ================================================================ 5. shop
 
-    /** Price of one round in this mode, as a multiple of the bet. A normal spin always costs 1 bet. */
+    /** Price of one round in this mode, as a multiple of the bet. A normal spin always costs 1 bet.
+     * Prices balanced AFTER overall balancing of base-game to TARGET_RTP.
+     * Manually uses simulators "fair-price" figure to determine these.
+     * */
     public double price(GameMode mode) {
         if (mode == GameMode.NORMAL) {
             return 1.0;
@@ -347,7 +348,10 @@ public final class SlotMath {
         throw notImplemented("price(" + mode + ")");
     }
 
-    /** Free spins awarded by a feature buy (BUY_FREE_SPINS / BUY_SUPER_FREE_SPINS). */
+    /** Free spins awarded by a feature buy (BUY_FREE_SPINS / BUY_SUPER_FREE_SPINS).
+     * These can change to let player have a longer spin session. Fair price needs to be set
+     * Currently this equals base-games free spin amount.
+     * */
     public int boughtFreeSpins(GameMode mode) {
         if (mode == GameMode.BUY_FREE_SPINS) {
             return FREE_SPINS_AWARDED;
@@ -374,12 +378,12 @@ public final class SlotMath {
         else if (mode == GameMode.BOOST_WILD){
             Symbol wild = Symbol.WILD;
             int randomRow = rng.nextInt(board.rowCount);
-            int randomReel = rng.nextInt(board.reelCount-1) +1;
+            int randomReel = rng.nextInt(board.reelCount-1) +1; // adjusts for never landing on reel1 and never exceeding index
             board.set(randomReel,randomRow,wild);
         }
     }
 
-    // ================================================================ 6. statistics (used by the simulator)
+    // ================================================================ statistics (used by the simulator)
     public double rtp(double totalWin, double totalBet) {
         return totalWin / totalBet;
     }
@@ -398,7 +402,7 @@ public final class SlotMath {
             int middleIndex = sorted.length/2;
             return sorted[middleIndex];
         }
-        // case even
+        // case even ; average of the two middles
         else {
             int upperMiddleIndex = sorted.length/2;
             int lowerMiddleIndex = upperMiddleIndex -1;

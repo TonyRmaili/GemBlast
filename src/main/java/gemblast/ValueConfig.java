@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -29,19 +30,31 @@ import java.util.Map;
  */
 public class ValueConfig {
 
-    public static final Path FILE = Path.of("weights.json");
+//    public static final Path FILE = Path.of("weights.json");
+    /** Folder for files the game writes: weights.json and the simulator output. Same place however it is started. */
+    public static final Path HOME = Path.of(System.getProperty("user.home"), "GemBlast");
+    public static final Path FILE = HOME.resolve("weights.json");
 
     public List<Double> reel1;
     public List<Double> reel2to5;
     public Map<String, List<Double>> paytable;
+
 
     // ---------------------------------------------------------------- file
 
     /** Reads weights.json. Fails with a clear message if the file is missing or incomplete. */
     public static ValueConfig load() {
         if (!Files.exists(FILE)) {
-            throw new IllegalStateException("weights.json not found in " + FILE.toAbsolutePath()
-                    + " (check the run configuration's working directory)");
+            // First start: copy the default weights.json that is packed inside the jar (src/main/resources).
+            try (InputStream in = ValueConfig.class.getResourceAsStream("/weights.json")) {
+                if (in == null) {
+                    throw new IllegalStateException("No default weights.json inside the program (src/main/resources)");
+                }
+                Files.createDirectories(HOME);
+                Files.copy(in, FILE);
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not create " + FILE.toAbsolutePath(), e);
+            }
         }
         try (Reader reader = Files.newBufferedReader(FILE, StandardCharsets.UTF_8)) {
             ValueConfig config = new Gson().fromJson(reader, ValueConfig.class);

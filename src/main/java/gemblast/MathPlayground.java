@@ -4,100 +4,98 @@ import java.util.*;
 
 /** Scratch file for testing SlotMath without the game. Click the green arrow next to main to run it. */
 public class MathPlayground {
-
+    // System.out.println();
     public static void main(String[] args) {
         ValueConfig config = ValueConfig.load();
-        TheoreticalMath mathTheory = new TheoreticalMath(config);
+        TheoreticalMath theoryMath = new TheoreticalMath(config);
+        SlotMath slotMath = new SlotMath(config);
+        int SEED = 42;
+        Random rng = new Random();
+        Board board = new Board(5,3);
+
+        //---------------- SLOT MATH ---------------------------------------------------------
 
 
-
-        System.out.print(mathTheory.firstGridRTP());
-
-
-
-
-
-
-//        for (Symbol symbol : Symbol.values()){
-//            mathTheory.cellProbability(symbol.toString());
-//        }
-
-
-
-//        SlotMath math = new SlotMath(config);
-//        Random rng = new Random(44);
-//        Board board = new Board(5,3);
+//        int reel = 1;
+//        Symbol drawnSymbol = slotMath.drawSymbol(reel,rng);
+//        System.out.println("draw one symbol: " + drawnSymbol);
 //
 //
-//        math.drawSymbol(0,rng);
-//        math.drawSymbol(1,rng);
+//
+//
+//        slotMath.fillGrid(board,rng);
+//        System.out.println("---------Filled grid------");
+//        System.out.println(board);
+//        System.out.println("--------------------------");
+//
+//
+//        List<Win> wins = slotMath.findWins(board);
+//        System.out.println("wins: "+ wins);
+//
+//        boolean[][] removableCells = slotMath.cellsToRemove(board,wins);
+//        System.out.println("---------cells to remove-------");
+//        System.out.println(Arrays.deepToString(removableCells));
+//        System.out.println("-------------------------------");
+//
+//
+//        System.out.println("---------avalanche-------");
+//        boolean[][] newGrid = slotMath.avalanche(board,removableCells,rng);
+//        System.out.println(Arrays.deepToString(newGrid));
+//        System.out.println("-------------------------");
 
-        // new feature testing uniqueGemsInRow()
-//        int rowIndex = 0;
-//        board.set(0,0,Symbol.BLACK_DIAMOND);
-//        board.setSticky(0,0,true);
-//
-//        board.set(1,0,Symbol.RUBY);
-//        board.setSticky(1,0,true);
-//
-//        board.set(2,0,Symbol.SAPPHIRE);
-//        board.setSticky(2,0,true);
-//
-//        board.set(3,0,Symbol.EMERALD);
-//        board.setSticky(3,0,true);
-//
-//        board.set(4,0,Symbol.OPAL);
+
+//        board.set(4,1,Symbol.SCATTER);
+//        board.setSticky(4,1,true);
+////             more stickys
+//        board.set(4,0,Symbol.SCATTER);
 //        board.setSticky(4,0,true);
 //
-//        math.fillGrid(board,rng);
-//        System.out.println(board);
-//
-//
-//
-//        double highest = math.uniqueGemsInRowPay(board,rowIndex);
-//        System.out.println(highest);
-
-
-
-//        double[] limits = {0, 1, 5, 20, 100, 1000};
-//        double[] WINS = {0, 0.5, 1.0, 3.0, 999, 1000};
-//
-//        // board setup
-
-//        board.set(2,1,Symbol.WILD);
-//        board.setSticky(2,1,true);
-////
 //        board.set(4,2,Symbol.SCATTER);
 //        board.setSticky(4,2,true);
+//
+//        board.set(3,1,Symbol.SCATTER);
+//        board.setSticky(3,1,true);
 
 
-
-        // method testing from SlotsMath
-//        math.fillGrid(board,rng);
+//        System.out.println("---------Grid with scatter------");
 //        System.out.println(board);
 //
-//        List<Win> wins = math.findWins(board);
-//        System.out.println(wins);
+//        int totalScatters = slotMath.countScatters(board.snapshot());
+//        int freeSpins = slotMath.freeSpinsAwarded(totalScatters);
+//        boolean superTriggered = slotMath.isSuperTrigger(totalScatters);
 //
-//        boolean[][] remove = math.cellsToRemove(board, wins);
-//        System.out.println(Arrays.deepToString(remove));
-//
-//        Map<Symbol, Integer>  collectedSymbols = math.shatterCollect(board,remove);
-//        System.out.println(collectedSymbols);
+//        System.out.println("totalScatters: " + totalScatters);
+//        System.out.println("free spins triggered: " + freeSpins);
+//        System.out.println("is it super free spins?: " + superTriggered);
+//        System.out.println("--------------------------");
 
-//        Symbol[][] grid = board.snapshot();
-//        int scatterCount = math.countScatters(grid);
-//        System.out.println("scatters: " + scatterCount);
+
+
 //
-//        boolean[][] newCells = math.avalanche(board, remove, rng);
-//        System.out.println(board);
-//        System.out.println(Arrays.deepToString(newCells));
+//        Map<Symbol, Integer> collectedSymbols = slotMath.shatterCollect(board,removableCells);
+//        System.out.println("collectedSymbols: " + collectedSymbols);
 //
-//        for (int i = 0; i < WINS.length; i++){
 //
-//            int bucket = math.distributionBucket(WINS[i],limits);
-//            System.out.println(bucket);
+//        // fixed shatter demo per symbol
+//        Symbol symbol = Symbol.RUBY;
+//        int endMultiplier = 3;
+//        double paidShatter = slotMath.shatterPay(symbol,endMultiplier);
+//        System.out.println(symbol + " shattered with multipier " + endMultiplier + " and won: " + paidShatter);
+//        System.out.println("--------------------------");
+//
+//        System.out.println("----------Unique Row----------------");
+//        for (int rowIndex = 0; rowIndex < board.rowCount; rowIndex++){
+//            double payingRow = slotMath.uniqueGemsInRowPay(board,rowIndex);
+//            System.out.println("Row " + (rowIndex +1) + " paid: " + payingRow);
+//
 //        }
+
+
+
+        // ---------------------THEORETICAL MATH ------------------------------
+
+
+        System.out.println("first grid RTP: " + theoryMath.firstGridRTP()*100 +"%");
 
 
     }
