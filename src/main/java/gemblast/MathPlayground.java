@@ -94,12 +94,10 @@ public class MathPlayground {
 
         // ---------------------THEORETICAL MATH ------------------------------
 
-
+        // avalanche factor from sim : 1.35x
         System.out.println("first grid RTP: " + theoryMath.firstGridRTP()*100 +"%");
 
-
         System.out.println("symbol Map " + theoryMath.symbolMap);
-
 
 
         // free spin trigger
@@ -110,6 +108,11 @@ public class MathPlayground {
 
         System.out.printf("Free spins:       %.4f%%   (1 in %,.0f)%n", freeSpins * 100, 1 / freeSpins);
         System.out.printf("Super free spins: %.4f%%   (1 in %,.0f)%n", superFree * 100, 1 / superFree);
+
+        // compare with simulator value; 10m spins normal mode => Win frequency per round 43.68%
+        System.out.printf("any win probability: %.4f%%%n", theoryMath.anyWinProbability() * 100);
+
+
 
     }
 }
