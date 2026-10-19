@@ -98,5 +98,18 @@ public class MathPlayground {
         System.out.println("first grid RTP: " + theoryMath.firstGridRTP()*100 +"%");
 
 
+        System.out.println("symbol Map " + theoryMath.symbolMap);
+
+
+
+        // free spin trigger
+        double freeSpins = theoryMath.probabilityAtLeastOnGrid(Symbol.SCATTER,3);
+
+        // super free spin trigger
+        double superFree = theoryMath.probabilityAtLeastOnGrid(Symbol.SCATTER,4);
+
+        System.out.printf("Free spins:       %.4f%%   (1 in %,.0f)%n", freeSpins * 100, 1 / freeSpins);
+        System.out.printf("Super free spins: %.4f%%   (1 in %,.0f)%n", superFree * 100, 1 / superFree);
+
     }
 }
