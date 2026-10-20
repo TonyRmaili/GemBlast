@@ -21,11 +21,11 @@ public final class SimulationResult {
     /** Win distribution buckets (total round win, x bet): 0, under 1, 1-5, 5-20, 20-100, 100-1000, 1000+. */
     static final double[] BUCKET_LIMITS = {0, 1, 5, 20, 100, 1000};
     static final String[] BUCKET_NAMES = {"0x", "0-1x", "1-5x", "5-20x", "20-100x", "100-1000x", "1000x+"};
-    private final long[] winHistogram;
-    private final long zeroWins;
-    private final double[] winSumHistogram;
-    private final List<Long> checkpointRounds;
-    private final List<Double> checkpointSums;
+    private final long[] winHistogram; // rounds per log bin (bin k = wins from edge(k) to edge(k+1)); histogram + exceedance charts
+    private final long zeroWins; // rounds that won 0: log10(0) doesn't exist, so they fit no log bin and are counted here instead
+    private final double[] winSumHistogram; // total won per log bin (same bins); divided by total bet = each bin's share of the RTP
+    private final List<Long> checkpointRounds; // round numbers where we took a snapshot (100, 126, 158... log-spaced)
+    private final List<Double> checkpointSums; // total won up to each checkpoint; sum / bet so far = the RTP at that point (convergence chart)
 
 
 
@@ -154,11 +154,14 @@ public final class SimulationResult {
             this.nextCheckpoint = math.checkpointAt(0);
         }
 
+        // collects sums and counts, in constant memory per round
         public void add(RoundResult round) {
             rounds++;
             double win = round.totalMultiplier();
             sumWin += win;
 
+            // snapshots at round n the total won so far and placed in sum
+            // we dont want to compute current rtp for EVERY round
             if (rounds == nextCheckpoint){
                 checkpointRounds.add(rounds);
                 checkpointSums.add(sumWin);
@@ -168,22 +171,26 @@ public final class SimulationResult {
 
 
             sumWinSq += win * win;
-            maxWin = Math.max(maxWin, win);
+            maxWin = Math.max(maxWin, win); // tracks biggest win seen for far
+
             if (win > 0) {
                 hits++;
-                winHistogram[math.histogramBin(win)]++;
-                winSumHistogram[math.histogramBin(win)]+= win;
+                winHistogram[math.histogramBin(win)]++; // count: one more round in this bin
+                winSumHistogram[math.histogramBin(win)]+= win; // amount: this round's win added to the bin
             }
             else{
                 zeroWins++;
             }
+
             buckets[math.distributionBucket(win, BUCKET_LIMITS)]++;
 
+            // false in buy modes: they go straight into the bonus
             if (round.hasBaseSpin()) {
                 double base = round.baseMultiplier();
                 sumBase += base;
                 baseSpins++;
 
+                // for calculating grids FIRST win total; comparison for theoryMath Rtp
                 if (!round.baseSpin.cascades.isEmpty()) {
                     sumFirstGrid += round.baseSpin.cascades.get(0).totalMultiplier();
                 }
@@ -200,7 +207,7 @@ public final class SimulationResult {
                 sumBonus += bonusWin;
                 sumBonusSq += bonusWin * bonusWin;
                 bonusWins.add(bonusWin);
-                (bonus.superMode ? superWins : regularWins).add(bonusWin);
+                (bonus.superMode ? superWins : regularWins).add(bonusWin); // adding win based on super vs regular freeSpin
                 bonusSpins += bonus.spinCount();
                 retriggers += bonus.retriggerCount();
                 sumFinalMultiplier += bonus.finalMultiplier();
@@ -211,6 +218,9 @@ public final class SimulationResult {
             }
         }
 
+
+        // formatting section from the results of add()
+        // also sends results to the writer
         public SimulationResult build() {
             List<Row> rows = new ArrayList<>();
             Map<String, Map<String, Object>> data = new LinkedHashMap<>();   // raw numbers for the files
@@ -224,12 +234,11 @@ public final class SimulationResult {
             }
 
 
-
             double totalBet = math.totalBet(rounds, price);
             double variance = math.variance(rounds, sumWin, sumWinSq);
             double sd = math.standardDeviation(variance);
             double rtp = math.rtp(sumWin, totalBet);
-            double margin = math.rtpMargin95(rounds, sd, price);
+            double margin = math.rtpMargin95(rounds, sd, price); // 1.96 · SD / root(n) / price: the RTP is within ± this, 95% sure
             double averageWin = math.average(sumWin, rounds);
             double fairPrice = math.fairPrice(averageWin);
             double hitFrequency = math.frequency(hits, rounds);
@@ -360,7 +369,6 @@ public final class SimulationResult {
                 row(rows, BUCKET_NAMES[i], pct(share));
                 winDistribution.put(BUCKET_NAMES[i], share);
             }
-
 
 
             String title = mode.displayName + " - " + count(rounds) + " rounds (seed " + seed + ")";

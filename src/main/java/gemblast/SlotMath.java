@@ -14,7 +14,7 @@ public final class SlotMath {
     /** Return target used for fair shop prices and in the simulator report. */
     public static final double TARGET_RTP = 0.96;
 
-    /** Safety limits so a loop can never run forever. Not part of the maths; leave them high. */
+    /** Safety limits so a loop can never run forever. */
     public static final int MAX_CASCADES = 100;
     public static final int MAX_FREE_SPINS = 200;
 
